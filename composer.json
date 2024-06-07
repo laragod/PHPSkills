@@ -1,5 +1,5 @@
 {
-  "name": "phpskills/phpskills",
+  "name": "laragod/phpskills",
   "description": "Implementation of Microsoft's TrueSkill matchmaking system for PHP",
   "keywords": ["trueskill", "matchmaking", "ranking", "skill", "elo"],
   "homepage": "https://github.com/laragod/PHPSkills",
