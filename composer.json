@@ -3,7 +3,7 @@
   "description": "Implementation of Microsoft's TrueSkill matchmaking system for PHP",
   "keywords": ["trueskill", "matchmaking", "ranking", "skill", "elo"],
   "homepage": "https://github.com/laragod/PHPSkills",
-  "version": "1.0.0",
+  "license": "MIT",
   "authors": [
     {
       "name": "Jeff Moser",
