@@ -11,7 +11,7 @@ class DrawMarginTest extends TestCase
 {
     const ERROR_TOLERANCE = 0.000001;
 
-    public function testGetDrawMarginFromDrawProbability()
+    public function testGetDrawMarginFromDrawProbability(): void
     {
         $beta = 25.0 / 6.0;
         // The expected values were compared against Ralf Herbrich's implementation in F#
@@ -20,9 +20,9 @@ class DrawMarginTest extends TestCase
         $this->assertDrawMargin(0.33, $beta, 2.5111010132487492);
     }
 
-    private function assertDrawMargin($drawProbability, $beta, $expected)
+    private function assertDrawMargin($drawProbability, $beta, $expected): void
     {
         $actual = DrawMargin::getDrawMarginFromDrawProbability($drawProbability, $beta);
-        $this->assertEquals($expected, $actual, '', DrawMarginTest::ERROR_TOLERANCE);
+        $this->assertEquals($expected, $actual, '');
     }
 }

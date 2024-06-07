@@ -13,21 +13,21 @@ use Exception;
  */
 class Guard
 {
-    public static function argumentNotNull($value, $parameterName)
+    public static function argumentNotNull($value, $parameterName): void
     {
         if ($value == null) {
             throw new Exception($parameterName.' can not be null');
         }
     }
 
-    public static function argumentIsValidIndex($index, $count, $parameterName)
+    public static function argumentIsValidIndex($index, $count, $parameterName): void
     {
         if (($index < 0) || ($index >= $count)) {
             throw new Exception($parameterName.' is an invalid index');
         }
     }
 
-    public static function argumentInRangeInclusive($value, $min, $max, $parameterName)
+    public static function argumentInRangeInclusive($value, $min, $max, $parameterName): void
     {
         if (($value < $min) || ($value > $max)) {
             throw new Exception($parameterName.' is not in the valid range ['.$min.', '.$max.']');

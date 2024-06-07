@@ -8,7 +8,7 @@ use Laragod\Skills\Numerics\GaussianDistribution;
 
 final class DrawMargin
 {
-    public static function getDrawMarginFromDrawProbability($drawProbability, $beta)
+    public static function getDrawMarginFromDrawProbability($drawProbability, $beta) : float|int
     {
         // Derived from TrueSkill technical report (MSR-TR-2006-80), page 6
 

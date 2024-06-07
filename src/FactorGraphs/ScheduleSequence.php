@@ -6,7 +6,7 @@ namespace Laragod\Skills\FactorGraphs;
 
 class ScheduleSequence extends Schedule
 {
-    private $_schedules;
+    private array $_schedules;
 
     public function __construct($name, array $schedules)
     {

@@ -18,10 +18,8 @@ abstract class GaussianFactor extends Factor
 
     /**
      * Sends the factor-graph message with and returns the log-normalization constant.
-     *
-     * @return float|int
      */
-    protected function sendMessageVariable(Message $message, Variable $variable)
+    protected function sendMessageVariable(Message $message, Variable $variable) : float|int
     {
         $marginal = $variable->getValue();
         $messageValue = $message->getValue();
@@ -34,11 +32,10 @@ abstract class GaussianFactor extends Factor
     public function createVariableToMessageBinding(Variable $variable): Message
     {
         $newDistribution = GaussianDistribution::fromPrecisionMean(0, 0);
-        $binding = parent::createVariableToMessageBindingWithMessage($variable,
+
+        return parent::createVariableToMessageBindingWithMessage($variable,
             new Message(
                 $newDistribution,
                 sprintf('message from %s to %s', $this, $variable)));
-
-        return $binding;
     }
 }

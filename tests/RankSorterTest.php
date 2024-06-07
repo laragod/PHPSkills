@@ -8,7 +8,7 @@ use Laragod\Skills\RankSorter;
 
 class RankSorterTest extends TestCase
 {
-    public function testSort()
+    public function testSort(): void
     {
         $team1 = ['a' => 1, 'b' => 2];
         $team2 = ['c' => 3, 'd' => 4];

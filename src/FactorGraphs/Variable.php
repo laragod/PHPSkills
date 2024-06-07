@@ -6,7 +6,7 @@ namespace Laragod\Skills\FactorGraphs;
 
 class Variable
 {
-    private $_name;
+    private string $_name;
 
     private $_prior;
 
@@ -24,12 +24,12 @@ class Variable
         return $this->_value;
     }
 
-    public function setValue($value)
+    public function setValue($value): void
     {
         $this->_value = $value;
     }
 
-    public function resetToPrior()
+    public function resetToPrior(): void
     {
         $this->_value = $this->_prior;
     }

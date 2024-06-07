@@ -53,23 +53,17 @@ class TwoPlayerTrueSkillCalculator extends SkillCalculator
 
         $results = new RatingContainer();
 
-        $results->setRating($winner, self::calculateNewRating($gameInfo,
-            $winnerPreviousRating,
-            $loserPreviousRating,
-            $wasDraw ? PairwiseComparison::DRAW
-                     : PairwiseComparison::WIN));
+        $results->setRating($winner, $this->calculateNewRating($gameInfo, $winnerPreviousRating, $loserPreviousRating, $wasDraw ? PairwiseComparison::DRAW
+                 : PairwiseComparison::WIN));
 
-        $results->setRating($loser, self::calculateNewRating($gameInfo,
-            $loserPreviousRating,
-            $winnerPreviousRating,
-            $wasDraw ? PairwiseComparison::DRAW
-                     : PairwiseComparison::LOSE));
+        $results->setRating($loser, $this->calculateNewRating($gameInfo, $loserPreviousRating, $winnerPreviousRating, $wasDraw ? PairwiseComparison::DRAW
+                 : PairwiseComparison::LOSE));
 
         // And we're done!
         return $results;
     }
 
-    private static function calculateNewRating(GameInfo $gameInfo, Rating $selfRating, Rating $opponentRating, $comparison): Rating
+    private function calculateNewRating(GameInfo $gameInfo, Rating $selfRating, Rating $opponentRating, $comparison): Rating
     {
         $drawMargin = DrawMargin::getDrawMarginFromDrawProbability(
             $gameInfo->getDrawProbability(),

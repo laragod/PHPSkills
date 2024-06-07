@@ -15,7 +15,7 @@ use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 // start the process.
 class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
 {
-    private $_teams;
+    private array $_teams;
 
     public function __construct(TrueSkillFactorGraph $parentGraph, array $teams)
     {
@@ -23,7 +23,7 @@ class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
         $this->_teams = $teams;
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $teams = $this->_teams;
         foreach ($teams as $currentTeam) {
@@ -35,7 +35,7 @@ class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
                 $localCurrentTeamPlayer = $currentTeamPlayer;
                 $currentTeamPlayerRating = $currentTeam->getRating($localCurrentTeamPlayer);
                 $playerSkill = $this->createSkillOutputVariable($localCurrentTeamPlayer);
-                $priorFactor = $this->createPriorFactor($localCurrentTeamPlayer, $currentTeamPlayerRating, $playerSkill);
+                $priorFactor = $this->createPriorFactor($currentTeamPlayerRating, $playerSkill);
                 $this->addLayerFactor($priorFactor);
                 $currentTeamSkills[] = $playerSkill;
             }
@@ -45,7 +45,7 @@ class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
         }
     }
 
-    public function createPriorSchedule()
+    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
     {
         $localFactors = $this->getLocalFactors();
 
@@ -58,7 +58,7 @@ class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
             'All priors');
     }
 
-    private function createPriorFactor($player, Rating $priorRating, Variable $skillsVariable): GaussianPriorFactor
+    private function createPriorFactor(Rating $priorRating, Variable $skillsVariable): GaussianPriorFactor
     {
         return new GaussianPriorFactor(
             $priorRating->getMean(),
@@ -72,8 +72,7 @@ class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
     {
         $parentFactorGraph = $this->getParentFactorGraph();
         $variableFactory = $parentFactorGraph->getVariableFactory();
-        $skillOutputVariable = $variableFactory->createKeyedVariable($key, $key."'s skill");
 
-        return $skillOutputVariable;
+        return $variableFactory->createKeyedVariable($key, $key."'s skill");
     }
 }

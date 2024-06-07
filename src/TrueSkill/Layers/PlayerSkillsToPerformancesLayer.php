@@ -17,7 +17,7 @@ class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
         parent::__construct($parentGraph);
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $inputVariablesGroups = $this->getInputVariablesGroups();
         $outputVariablesGroups = &$this->getOutputVariablesGroups();
@@ -49,12 +49,10 @@ class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
 
     private function createOutputVariable($key)
     {
-        $outputVariable = $this->getParentFactorGraph()->getVariableFactory()->createKeyedVariable($key, $key."'s performance");
-
-        return $outputVariable;
+        return $this->getParentFactorGraph()->getVariableFactory()->createKeyedVariable($key, $key."'s performance");
     }
 
-    public function createPriorSchedule()
+    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
     {
         $localFactors = $this->getLocalFactors();
 
@@ -67,7 +65,7 @@ class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
             'All skill to performance sending');
     }
 
-    public function createPosteriorSchedule()
+    public function createPosteriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
     {
         $localFactors = $this->getLocalFactors();
 

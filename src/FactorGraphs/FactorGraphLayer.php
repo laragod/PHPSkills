@@ -13,7 +13,7 @@ abstract class FactorGraphLayer
 
     private $_inputVariablesGroups = [];
 
-    private $_parentFactorGraph;
+    private \Laragod\Skills\FactorGraphs\FactorGraph $_parentFactorGraph;
 
     protected function __construct(FactorGraph $parentGraph)
     {
@@ -45,7 +45,7 @@ abstract class FactorGraphLayer
         return $this->_localFactors;
     }
 
-    public function setInputVariablesGroups($value)
+    public function setInputVariablesGroups($value): void
     {
         $this->_inputVariablesGroups = $value;
     }
@@ -55,19 +55,19 @@ abstract class FactorGraphLayer
         return new ScheduleSequence($name, $itemsToSequence);
     }
 
-    protected function addLayerFactor(Factor $factor)
+    protected function addLayerFactor(Factor $factor) : void
     {
         $this->_localFactors[] = $factor;
     }
 
     abstract public function buildLayer();
 
-    public function createPriorSchedule()
+    public function createPriorSchedule() : ?ScheduleSequence
     {
         return null;
     }
 
-    public function createPosteriorSchedule()
+    public function createPosteriorSchedule() : ?ScheduleSequence
     {
         return null;
     }

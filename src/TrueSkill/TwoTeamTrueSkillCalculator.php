@@ -43,26 +43,18 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
 
         $results = new RatingContainer();
 
-        self::updatePlayerRatings($gameInfo,
-            $results,
-            $team1,
-            $team2,
-            $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::WIN);
+        $this->updatePlayerRatings($gameInfo, $results, $team1, $team2, $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::WIN);
 
-        self::updatePlayerRatings($gameInfo,
-            $results,
-            $team2,
-            $team1,
-            $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::LOSE);
+        $this->updatePlayerRatings($gameInfo, $results, $team2, $team1, $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::LOSE);
 
         return $results;
     }
 
-    private static function updatePlayerRatings(GameInfo $gameInfo,
+    private function updatePlayerRatings(GameInfo $gameInfo,
         RatingContainer $newPlayerRatings,
         Team $selfTeam,
         Team $otherTeam,
-        $selfToOtherTeamComparison)
+        $selfToOtherTeamComparison): void
     {
         $drawMargin = DrawMargin::getDrawMarginFromDrawProbability(
             $gameInfo->getDrawProbability(),

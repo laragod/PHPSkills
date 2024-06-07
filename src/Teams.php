@@ -6,9 +6,8 @@ namespace Laragod\Skills;
 
 class Teams
 {
-    public static function concat(/*variable arguments*/): array
+    public static function concat(...$args/*variable arguments*/): array
     {
-        $args = func_get_args();
         $result = [];
 
         foreach ($args as $currentTeam) {

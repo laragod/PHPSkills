@@ -16,7 +16,7 @@ use Laragod\Skills\TeamsRange;
 
 abstract class TwoPlayerEloCalculator extends SkillCalculator
 {
-    protected $_kFactor;
+    protected \Laragod\Skills\Elo\KFactor $_kFactor;
 
     protected function __construct(KFactor $kFactor)
     {
@@ -67,7 +67,7 @@ abstract class TwoPlayerEloCalculator extends SkillCalculator
         return new EloRating($newRating);
     }
 
-    private static function getScoreFromComparison($comparison)
+    private function getScoreFromComparison($comparison) : float|int
     {
         switch ($comparison) {
             case PairwiseComparison::WIN:
@@ -94,8 +94,6 @@ abstract class TwoPlayerEloCalculator extends SkillCalculator
 
         $player1Rating = $player1->getMean();
         $player2Rating = $player2->getMean();
-
-        $ratingDifference = $player1Rating - $player2Rating;
 
         // The TrueSkill paper mentions that they used s1 - s2 (rating difference) to
         // determine match quality. I convert that to a percentage as a delta from 50%

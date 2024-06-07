@@ -15,7 +15,7 @@ use Laragod\Skills\Numerics\GaussianDistribution;
  */
 class GaussianPriorFactor extends GaussianFactor
 {
-    private $_newMessage;
+    private \Laragod\Skills\Numerics\GaussianDistribution $_newMessage;
 
     public function __construct($mean, $variance, Variable $variable)
     {

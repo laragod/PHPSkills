@@ -39,9 +39,8 @@ class Matrix
         return $result;
     }
 
-    public static function fromRowsColumns(): Matrix
+    public static function fromRowsColumns(...$args): Matrix
     {
-        $args = \func_get_args();
         $rows = $args[0];
         $cols = $args[1];
         $result = new Matrix($rows, $cols);
@@ -71,7 +70,7 @@ class Matrix
         return $this->_matrixRowData[$row][$col];
     }
 
-    public function setValue($row, $col, $value)
+    public function setValue($row, $col, $value): void
     {
         $this->_matrixRowData[$row][$col] = $value;
     }
@@ -140,13 +139,13 @@ class Matrix
             $firstRowColValue = $this->_matrixRowData[0][$currentColumn];
             $cofactor = $this->getCofactor(0, $currentColumn);
             $itemToAdd = $firstRowColValue * $cofactor;
-            $result = $result + $itemToAdd;
+            $result += $itemToAdd;
         }
 
         return $result;
     }
 
-    public function getAdjugate()
+    public function getAdjugate() : SquareMatrix|Matrix
     {
         if (! $this->isSquare()) {
             throw new Exception('Matrix must be square!');
@@ -183,7 +182,7 @@ class Matrix
         return new Matrix($this->_columnCount, $this->_rowCount, $result);
     }
 
-    public function getInverse()
+    public function getInverse() : SquareMatrix|Matrix
     {
         if (($this->_rowCount == 1) && ($this->_columnCount == 1)) {
             return new SquareMatrix(1.0 / $this->_matrixRowData[0][0]);
@@ -260,7 +259,7 @@ class Matrix
                     $leftValue = $left->getValue($currentRow, $vectorIndex);
                     $rightValue = $right->getValue($vectorIndex, $currentColumn);
                     $vectorIndexProduct = $leftValue * $rightValue;
-                    $productValue = $productValue + $vectorIndexProduct;
+                    $productValue += $vectorIndexProduct;
                 }
 
                 $resultMatrix[$currentRow][$currentColumn] = $productValue;

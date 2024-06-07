@@ -35,7 +35,7 @@ class FactorList
         $sumLogS = 0;
 
         foreach ($list as &$currentFactor) {
-            $sumLogS = $sumLogS + $currentFactor->getLogNormalization();
+            $sumLogS += $currentFactor->getLogNormalization();
         }
 
         return $sumLogZ + $sumLogS;

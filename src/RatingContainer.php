@@ -6,7 +6,7 @@ namespace Laragod\Skills;
 
 class RatingContainer
 {
-    private $_playerToRating;
+    private \Laragod\Skills\HashMap $_playerToRating;
 
     public function __construct()
     {

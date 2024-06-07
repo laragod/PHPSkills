@@ -9,7 +9,7 @@ use Laragod\Skills\TrueSkill\FactorGraphTrueSkillCalculator;
 
 class FactorGraphTrueSkillCalculatorTest extends TestCase
 {
-    public function testFactorGraphTrueSkillCalculator()
+    public function testFactorGraphTrueSkillCalculator(): void
     {
         $calculator = new FactorGraphTrueSkillCalculator();
 

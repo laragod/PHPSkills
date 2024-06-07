@@ -21,11 +21,11 @@ use Laragod\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferences
 
 class TrueSkillFactorGraph extends FactorGraph
 {
-    private $_gameInfo;
+    private \Laragod\Skills\GameInfo $_gameInfo;
 
-    private $_layers;
+    private array $_layers;
 
-    private $_priorLayer;
+    private \Laragod\Skills\TrueSkill\Layers\PlayerPriorValuesToSkillsLayer $_priorLayer;
 
     public function __construct(GameInfo $gameInfo, array $teams, array $teamRanks)
     {
@@ -53,7 +53,7 @@ class TrueSkillFactorGraph extends FactorGraph
         return $this->_gameInfo;
     }
 
-    public function buildGraph()
+    public function buildGraph(): void
     {
         $lastOutput = null;
 
@@ -69,10 +69,10 @@ class TrueSkillFactorGraph extends FactorGraph
         }
     }
 
-    public function runSchedule()
+    public function runSchedule(): void
     {
         $fullSchedule = $this->createFullSchedule();
-        $fullScheduleDelta = $fullSchedule->visit();
+        $fullSchedule->visit();
     }
 
     public function getProbabilityOfRanking(): float

@@ -12,9 +12,9 @@ abstract class Factor
 {
     private $_messages = [];
 
-    private $_messageToVariableBinding;
+    private \Laragod\Skills\HashMap $_messageToVariableBinding;
 
-    private $_name;
+    private string $_name;
 
     private $_variables = [];
 
@@ -27,7 +27,7 @@ abstract class Factor
     /**
      * @return mixed The log-normalization constant of that factor
      */
-    public function getLogNormalization()
+    public function getLogNormalization() : mixed
     {
         return 0;
     }
@@ -72,7 +72,7 @@ abstract class Factor
     /**
      * Resets the marginal of the variables a factor is connected to
      */
-    public function resetMarginals()
+    public function resetMarginals(): void
     {
         $allValues = $this->_messageToVariableBinding->getAllValues();
         foreach ($allValues as $currentVariable) {

@@ -21,15 +21,13 @@ class GaussianWeightedSumFactor extends GaussianFactor
 
     // This following is used for convenience, for example, the first entry is [0, 1, 2]
     // corresponding to v[0] = a1*v[1] + a2*v[2]
-    private $_weights;
+    private $_weights = [];
 
-    private $_weightsSquared;
+    private $_weightsSquared = [];
 
     public function __construct(Variable $sumVariable, array $variablesToSum, ?array $variableWeights = null)
     {
-        parent::__construct(self::createName($sumVariable, $variablesToSum, $variableWeights));
-        $this->_weights = [];
-        $this->_weightsSquared = [];
+        parent::__construct($this->createName($sumVariable, $variablesToSum, $variableWeights));
 
         // The first weights are a straightforward copy
         // v_0 = a_1*v_1 + a_2*v_2 + ... + a_n * v_n
@@ -73,7 +71,7 @@ class GaussianWeightedSumFactor extends GaussianFactor
             for ($currentWeightSourceIndex = 0;
                 $currentWeightSourceIndex < $variableWeightsLength;
                 $currentWeightSourceIndex++) {
-                if ($currentWeightSourceIndex == ($weightsIndex - 1)) {
+                if ($currentWeightSourceIndex === $weightsIndex - 1) {
                     continue;
                 }
 
@@ -115,7 +113,7 @@ class GaussianWeightedSumFactor extends GaussianFactor
         }
     }
 
-    public function getLogNormalization()
+    public function getLogNormalization() : int|float
     {
         $vars = $this->getVariables();
         $messages = $this->getMessages();
@@ -166,10 +164,8 @@ class GaussianWeightedSumFactor extends GaussianFactor
         }
 
         $newPrecision = 1.0 / $inverseOfNewPrecisionSum;
-        $anotherNewPrecision = 1.0 / $anotherInverseOfNewPrecisionSum;
 
         $newPrecisionMean = $newPrecision * $weightedMeanSum;
-        $anotherNewPrecisionMean = $anotherNewPrecision * $anotherWeightedMeanSum;
 
         $newMessage = GaussianDistribution::fromPrecisionMean($newPrecisionMean, $newPrecision);
         $oldMarginalWithoutMessage = GaussianDistribution::divide($marginal0, $message0);
@@ -214,7 +210,7 @@ class GaussianWeightedSumFactor extends GaussianFactor
             $updatedVariables);
     }
 
-    private static function createName($sumVariable, $variablesToSum, $weights): string
+    private function createName($sumVariable, $variablesToSum, $weights): string
     {
         // TODO: Perf? Use PHP equivalent of StringBuilder? implode on arrays?
         $result = (string) $sumVariable;
@@ -234,7 +230,7 @@ class GaussianWeightedSumFactor extends GaussianFactor
             $result .= (string) $variablesToSum[$i];
             $result .= ']';
 
-            $isLast = ($i == ($totalVars - 1));
+            $isLast = ($i === $totalVars - 1);
 
             if (! $isLast) {
                 if ($weights[$i + 1] >= 0) {

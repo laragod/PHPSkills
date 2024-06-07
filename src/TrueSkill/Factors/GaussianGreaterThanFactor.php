@@ -25,7 +25,7 @@ class GaussianGreaterThanFactor extends GaussianFactor
         $this->createVariableToMessageBinding($variable);
     }
 
-    public function getLogNormalization()
+    public function getLogNormalization() : int|float
     {
         /** @var Variable[] $vars */
         $vars = $this->getVariables();

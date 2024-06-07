@@ -9,7 +9,7 @@ use Laragod\Skills\Tests\TestCase;
 
 class BasicMathTest extends TestCase
 {
-    public function testSquare()
+    public function testSquare(): void
     {
         $this->assertEquals(1, BasicMath::square(1));
         $this->assertEquals(1.44, BasicMath::square(1.2));

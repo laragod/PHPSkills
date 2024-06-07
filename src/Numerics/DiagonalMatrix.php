@@ -16,7 +16,7 @@ class DiagonalMatrix extends Matrix
 
         for ($currentRow = 0; $currentRow < $rowCount; $currentRow++) {
             for ($currentCol = 0; $currentCol < $colCount; $currentCol++) {
-                if ($currentRow == $currentCol) {
+                if ($currentRow === $currentCol) {
                     $this->setValue($currentRow, $currentCol, $diagonalValues[$currentRow]);
                 } else {
                     $this->setValue($currentRow, $currentCol, 0);

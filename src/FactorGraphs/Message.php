@@ -21,7 +21,7 @@ class Message
         return $this->_value;
     }
 
-    public function setValue($value)
+    public function setValue($value): void
     {
         $this->_value = $value;
     }

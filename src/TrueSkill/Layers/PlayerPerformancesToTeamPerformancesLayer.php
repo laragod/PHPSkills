@@ -16,7 +16,7 @@ class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLaye
         parent::__construct($parentGraph);
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $inputVariablesGroups = $this->getInputVariablesGroups();
         foreach ($inputVariablesGroups as $currentTeam) {
@@ -32,19 +32,17 @@ class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLaye
         }
     }
 
-    public function createPriorSchedule()
+    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
     {
         $localFactors = $this->getLocalFactors();
 
-        $sequence = $this->scheduleSequence(
+        return $this->scheduleSequence(
             array_map(
                 function ($weightedSumFactor) {
                     return new ScheduleStep('Perf to Team Perf Step', $weightedSumFactor, 0);
                 },
                 $localFactors),
             'all player perf to team perf schedule');
-
-        return $sequence;
     }
 
     protected function createPlayerToTeamSumFactor($teamMembers, $sumVariable): GaussianWeightedSumFactor
@@ -64,7 +62,7 @@ class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLaye
 
     }
 
-    public function createPosteriorSchedule()
+    public function createPosteriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
     {
         $allFactors = [];
         $localFactors = $this->getLocalFactors();
@@ -87,8 +85,7 @@ class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLaye
         }, $team);
 
         $teamMemberNames = \implode(', ', $memberNames);
-        $outputVariable = $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable('Team['.$teamMemberNames."]'s performance");
 
-        return $outputVariable;
+        return $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable('Team['.$teamMemberNames."]'s performance");
     }
 }

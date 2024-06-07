@@ -17,7 +17,7 @@ use Laragod\Skills\Numerics\GaussianDistribution;
  */
 class GaussianLikelihoodFactor extends GaussianFactor
 {
-    private $_precision;
+    private float $_precision;
 
     public function __construct($betaSquared, Variable $variable1, Variable $variable2)
     {
@@ -27,7 +27,7 @@ class GaussianLikelihoodFactor extends GaussianFactor
         $this->createVariableToMessageBinding($variable2);
     }
 
-    public function getLogNormalization()
+    public function getLogNormalization() : int|float
     {
         /** @var KeyedVariable[]|mixed $vars */
         $vars = $this->getVariables();

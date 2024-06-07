@@ -14,12 +14,12 @@ class DefaultVariable extends Variable
         parent::__construct('Default', null);
     }
 
-    public function getValue()
+    public function getValue() : null
     {
         return null;
     }
 
-    public function setValue($value)
+    public function setValue($value) : void
     {
         throw new Exception();
     }

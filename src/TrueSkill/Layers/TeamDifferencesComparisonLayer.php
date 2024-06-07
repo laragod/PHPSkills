@@ -11,9 +11,9 @@ use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 
 class TeamDifferencesComparisonLayer extends TrueSkillFactorGraphLayer
 {
-    private $_epsilon;
+    private float|int $_epsilon;
 
-    private $_teamRanks;
+    private array $_teamRanks;
 
     public function __construct(TrueSkillFactorGraph $parentGraph, array $teamRanks)
     {
@@ -23,7 +23,7 @@ class TeamDifferencesComparisonLayer extends TrueSkillFactorGraphLayer
         $this->_epsilon = DrawMargin::getDrawMarginFromDrawProbability($gameInfo->getDrawProbability(), $gameInfo->getBeta());
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $inputVarGroups = $this->getInputVariablesGroups();
         $inputVarGroupsCount = count($inputVarGroups);

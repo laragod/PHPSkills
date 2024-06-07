@@ -8,7 +8,7 @@ class ScheduleLoop extends Schedule
 {
     private $_maxDelta;
 
-    private $_scheduleToLoop;
+    private \Laragod\Skills\FactorGraphs\Schedule $_scheduleToLoop;
 
     public function __construct($name, Schedule $scheduleToLoop, $maxDelta)
     {

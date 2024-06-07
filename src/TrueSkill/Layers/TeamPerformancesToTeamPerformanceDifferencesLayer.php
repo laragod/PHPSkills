@@ -15,7 +15,7 @@ class TeamPerformancesToTeamPerformanceDifferencesLayer extends TrueSkillFactorG
         parent::__construct($parentGraph);
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $inputVariablesGroups = $this->getInputVariablesGroups();
         $inputVariablesGroupsCount = count($inputVariablesGroups);
@@ -46,8 +46,6 @@ class TeamPerformancesToTeamPerformanceDifferencesLayer extends TrueSkillFactorG
 
     private function createOutputVariable()
     {
-        $outputVariable = $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable('Team performance difference');
-
-        return $outputVariable;
+        return $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable('Team performance difference');
     }
 }

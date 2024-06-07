@@ -13,9 +13,9 @@ abstract class SkillCalculator
 {
     private $_supportedOptions;
 
-    private $_playersPerTeamAllowed;
+    private \Laragod\Skills\PlayersRange $_playersPerTeamAllowed;
 
-    private $_totalTeamsAllowed;
+    private \Laragod\Skills\TeamsRange $_totalTeamsAllowed;
 
     protected function __construct($supportedOptions, TeamsRange $totalTeamsAllowed, PlayersRange $playerPerTeamAllowed)
     {
@@ -50,14 +50,14 @@ abstract class SkillCalculator
         return ($this->_supportedOptions & $option) == $option;
     }
 
-    protected function validateTeamCountAndPlayersCountPerTeam(array $teamsOfPlayerToRatings)
+    protected function validateTeamCountAndPlayersCountPerTeam(array $teamsOfPlayerToRatings) : void
     {
-        self::validateTeamCountAndPlayersCountPerTeamWithRanges($teamsOfPlayerToRatings, $this->_totalTeamsAllowed, $this->_playersPerTeamAllowed);
+        $this->validateTeamCountAndPlayersCountPerTeamWithRanges($teamsOfPlayerToRatings, $this->_totalTeamsAllowed, $this->_playersPerTeamAllowed);
     }
 
-    private static function validateTeamCountAndPlayersCountPerTeamWithRanges(array $teams,
+    private function validateTeamCountAndPlayersCountPerTeamWithRanges(array $teams,
         TeamsRange $totalTeams,
-        PlayersRange $playersPerTeam)
+        PlayersRange $playersPerTeam): void
     {
         $countOfTeams = 0;
 

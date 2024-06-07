@@ -13,7 +13,7 @@ abstract class FactorGraph
         return $this->_variableFactory;
     }
 
-    public function setVariableFactory(VariableFactory $factory)
+    public function setVariableFactory(VariableFactory $factory): void
     {
         $this->_variableFactory = $factory;
     }

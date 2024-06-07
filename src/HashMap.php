@@ -15,15 +15,14 @@ class HashMap
 
     public function getValue($key)
     {
-        $hash = self::getHash($key);
-        $hashValue = $this->_hashToValue[$hash];
+        $hash = $this->getHash($key);
 
-        return $hashValue;
+        return $this->_hashToValue[$hash];
     }
 
     public function setValue($key, $value): HashMap
     {
-        $hash = self::getHash($key);
+        $hash = $this->getHash($key);
         $this->_hashToKey[$hash] = $key;
         $this->_hashToValue[$hash] = $value;
 
@@ -32,16 +31,12 @@ class HashMap
 
     public function getAllKeys(): array
     {
-        $keys = array_values($this->_hashToKey);
-
-        return $keys;
+        return array_values($this->_hashToKey);
     }
 
     public function getAllValues(): array
     {
-        $values = array_values($this->_hashToValue);
-
-        return $values;
+        return array_values($this->_hashToValue);
     }
 
     public function count(): int
@@ -49,7 +44,7 @@ class HashMap
         return count($this->_hashToKey);
     }
 
-    private static function getHash($key)
+    private function getHash($key)
     {
         if (is_object($key)) {
             return spl_object_hash($key);

@@ -13,9 +13,9 @@ use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 // The whole purpose of this is to do a loop on the bottom
 class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
 {
-    private $_TeamDifferencesComparisonLayer;
+    private \Laragod\Skills\TrueSkill\Layers\TeamDifferencesComparisonLayer $_TeamDifferencesComparisonLayer;
 
-    private $_TeamPerformancesToTeamPerformanceDifferencesLayer;
+    private \Laragod\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferencesLayer $_TeamPerformancesToTeamPerformanceDifferencesLayer;
 
     public function __construct(TrueSkillFactorGraph $parentGraph,
         TeamPerformancesToTeamPerformanceDifferencesLayer $teamPerformancesToPerformanceDifferences,
@@ -28,14 +28,12 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
 
     public function getLocalFactors(): array
     {
-        $localFactors = array_merge($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors(),
+        return array_merge($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors(),
             $this->_TeamDifferencesComparisonLayer->getLocalFactors()
         );
-
-        return $localFactors;
     }
 
-    public function buildLayer()
+    public function buildLayer(): void
     {
         $inputVariablesGroups = $this->getInputVariablesGroups();
         $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->setInputVariablesGroups($inputVariablesGroups);
@@ -62,14 +60,13 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
 
         // When dealing with differences, there are always (n-1) differences, so add in the 1
         $totalTeamDifferences = count($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors());
-        $totalTeams = $totalTeamDifferences + 1;
 
         $localFactors = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
 
         $firstDifferencesFactor = $localFactors[0];
         $lastDifferencesFactor = $localFactors[$totalTeamDifferences - 1];
 
-        $innerSchedule = new ScheduleSequence(
+        return new ScheduleSequence(
             'inner schedule',
             [
                 $loop,
@@ -81,8 +78,6 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
                     $lastDifferencesFactor, 2),
             ]
         );
-
-        return $innerSchedule;
     }
 
     private function createTwoTeamInnerPriorLoopSchedule(): ScheduleSequence
@@ -175,11 +170,9 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
 
         $initialMaxDelta = 0.0001;
 
-        $loop = new ScheduleLoop(
+        return new ScheduleLoop(
             sprintf('loop with max delta of %f', $initialMaxDelta),
             $forwardBackwardScheduleToLoop,
             $initialMaxDelta);
-
-        return $loop;
     }
 }

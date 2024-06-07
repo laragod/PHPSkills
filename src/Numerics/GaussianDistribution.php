@@ -18,11 +18,11 @@ class GaussianDistribution
 
     // precision and precisionMean are used because they make multiplying and dividing simpler
     // (the the accompanying math paper for more details)
-    private $_precision;
+    private float $_precision;
 
-    private $_precisionMean;
+    private float|int $_precisionMean;
 
-    private $_variance;
+    private float|int $_variance;
 
     public function __construct($mean = 0.0, $standardDeviation = 1.0)
     {
@@ -36,11 +36,7 @@ class GaussianDistribution
         } else {
             $this->_precision = \INF;
 
-            if ($this->_mean == 0) {
-                $this->_precisionMean = 0;
-            } else {
-                $this->_precisionMean = \INF;
-            }
+            $this->_precisionMean = $this->_mean == 0 ? 0 : \INF;
         }
     }
 
@@ -128,7 +124,7 @@ class GaussianDistribution
         return GaussianDistribution::absoluteDifference($left, $right);
     }
 
-    public static function logProductNormalization(GaussianDistribution $left, GaussianDistribution $right)
+    public static function logProductNormalization(GaussianDistribution $left, GaussianDistribution $right) : float|int
     {
         if (($left->_precision == 0) || ($right->_precision == 0)) {
             return 0;
@@ -150,7 +146,7 @@ class GaussianDistribution
         );
     }
 
-    public static function logRatioNormalization(GaussianDistribution $numerator, GaussianDistribution $denominator)
+    public static function logRatioNormalization(GaussianDistribution $numerator, GaussianDistribution $denominator) : float|int
     {
         if (($numerator->_precision == 0) || ($denominator->_precision == 0)) {
             return 0;
@@ -174,9 +170,8 @@ class GaussianDistribution
 
         $multiplier = 1.0 / ($standardDeviation * sqrt(2 * M_PI));
         $expPart = exp((-1.0 * BasicMath::square($x - $mean)) / (2 * BasicMath::square($standardDeviation)));
-        $result = $multiplier * $expPart;
 
-        return $result;
+        return $multiplier * $expPart;
     }
 
     public static function cumulativeTo($x, $mean = 0.0, $standardDeviation = 1.0): float
@@ -240,7 +235,7 @@ class GaussianDistribution
         return ($x >= 0.0) ? $ans : (2.0 - $ans);
     }
 
-    private static function inverseErrorFunctionCumulativeTo($p)
+    private static function inverseErrorFunctionCumulativeTo($p) : float|int
     {
         // From page 265 of numerical recipes
 

@@ -25,7 +25,7 @@ class GaussianWithinFactor extends GaussianFactor
         $this->createVariableToMessageBinding($variable);
     }
 
-    public function getLogNormalization()
+    public function getLogNormalization() : int|float
     {
         /** @var Variable[] $variables */
         $variables = $this->getVariables();

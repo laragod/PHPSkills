@@ -50,7 +50,7 @@ class Rating
     /**
      * A conservative estimate of skill based on the mean and standard deviation.
      */
-    public function getConservativeRating()
+    public function getConservativeRating() : float|int
     {
         return $this->_mean - $this->_conservativeStandardDeviationMultiplier * $this->_standardDeviation;
     }

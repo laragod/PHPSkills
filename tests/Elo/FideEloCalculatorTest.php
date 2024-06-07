@@ -11,7 +11,7 @@ use Laragod\Skills\Tests\TestCase;
 
 class FideEloCalculatorTest extends TestCase
 {
-    public function testFideProvisionalEloCalculator()
+    public function testFideProvisionalEloCalculator(): void
     {
         // verified against http://ratings.fide.com/calculator_rtd.phtml
         $calc = new FideEloCalculator(new ProvisionalFideKFactor());
@@ -21,7 +21,7 @@ class FideEloCalculatorTest extends TestCase
         EloAssert::assertChessRating($this, $calc, 1200, 1500, PairwiseComparison::LOSE, 1196.25, 1503.75);
     }
 
-    public function testFideNonProvisionalEloCalculator()
+    public function testFideNonProvisionalEloCalculator(): void
     {
         // verified against http://ratings.fide.com/calculator_rtd.phtml
         $calc = FideEloCalculator::createWithDefaultKFactor();

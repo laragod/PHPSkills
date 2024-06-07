@@ -18,7 +18,7 @@ class BasicMath
      * @param  number  $x  Value to square (x)
      * @return number The squared value (x^2)
      */
-    public static function square($x)
+    public static function square($x) : float|int
     {
         return $x * $x;
     }

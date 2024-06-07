@@ -21,7 +21,7 @@ class EloAssert
         $player2BeforeRating,
         $player1Result,
         $player1AfterRating,
-        $player2AfterRating)
+        $player2AfterRating): void
     {
         $player1 = 'Player1';
         $player2 = 'Player2';
@@ -41,7 +41,7 @@ class EloAssert
             $ranks
         );
 
-        $testClass->assertEquals($player1AfterRating, $result[$player1]->getMean(), '', self::ERROR_TOLERANCE);
-        $testClass->assertEquals($player2AfterRating, $result[$player2]->getMean(), '', self::ERROR_TOLERANCE);
+        $testClass->assertEquals($player1AfterRating, $result[$player1]->getMean(), '');
+        $testClass->assertEquals($player2AfterRating, $result[$player2]->getMean(), '');
     }
 }

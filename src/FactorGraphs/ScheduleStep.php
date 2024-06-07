@@ -6,7 +6,7 @@ namespace Laragod\Skills\FactorGraphs;
 
 class ScheduleStep extends Schedule
 {
-    private $_factor;
+    private \Laragod\Skills\FactorGraphs\Factor $_factor;
 
     private $_index;
 
@@ -20,8 +20,7 @@ class ScheduleStep extends Schedule
     public function visit($depth = -1, $maxDepth = 0)
     {
         $currentFactor = $this->_factor;
-        $delta = $currentFactor->updateMessageIndex($this->_index);
 
-        return $delta;
+        return $currentFactor->updateMessageIndex($this->_index);
     }
 }
