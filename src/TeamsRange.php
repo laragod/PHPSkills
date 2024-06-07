@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills;
+<?php
 
-use Moserware\Skills\Numerics\Range;
+declare(strict_types=1);
+
+namespace Laragod\Skills;
+
+use Laragod\Skills\Numerics\Range;
 
 class TeamsRange extends Range
 {
@@ -8,8 +12,8 @@ class TeamsRange extends Range
     {
         parent::__construct($min, $max);
     }
-    
-    protected static function create($min, $max)
+
+    protected static function create($min, $max): TeamsRange
     {
         return new TeamsRange($min, $max);
     }

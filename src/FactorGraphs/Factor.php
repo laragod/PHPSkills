@@ -1,20 +1,26 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 use Exception;
-use Moserware\Skills\Guard;
-use Moserware\Skills\HashMap;
+use Laragod\Skills\Guard;
+use Laragod\Skills\HashMap;
 
 abstract class Factor
 {
-    private $_messages = array();
+    private $_messages = [];
+
     private $_messageToVariableBinding;
 
     private $_name;
-    private $_variables = array();
+
+    private $_variables = [];
 
     protected function __construct($name)
     {
-        $this->_name = "Factor[" . $name . "]";
+        $this->_name = 'Factor['.$name.']';
         $this->_messageToVariableBinding = new HashMap();
     }
 
@@ -29,31 +35,32 @@ abstract class Factor
     /**
      * @return int The number of messages that the factor has
      */
-    public function getNumberOfMessages()
+    public function getNumberOfMessages(): int
     {
         return count($this->_messages);
     }
 
-    protected function getVariables()
+    protected function getVariables(): array
     {
         return $this->_variables;
     }
 
-    protected function getMessages()
+    protected function getMessages(): array
     {
         return $this->_messages;
     }
 
     /**
      * Update the message and marginal of the i-th variable that the factor is connected to
-     * @param $messageIndex
+     *
      * @throws Exception
      */
     public function updateMessageIndex($messageIndex)
     {
-        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), "messageIndex");
+        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), 'messageIndex');
         $message = $this->_messages[$messageIndex];
         $variable = $this->_messageToVariableBinding->getValue($message);
+
         return $this->updateMessageVariable($message, $variable);
     }
 
@@ -75,28 +82,29 @@ abstract class Factor
 
     /**
      * Sends the ith message to the marginal and returns the log-normalization constant
-     * @param $messageIndex
-     * @return
+     *
      * @throws Exception
      */
     public function sendMessageIndex($messageIndex)
     {
-        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), "messageIndex");
+        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), 'messageIndex');
 
         $message = $this->_messages[$messageIndex];
         $variable = $this->_messageToVariableBinding->getValue($message);
+
         return $this->sendMessageVariable($message, $variable);
     }
 
-    protected abstract function sendMessageVariable(Message $message, Variable $variable);
+    abstract protected function sendMessageVariable(Message $message, Variable $variable);
 
-    public abstract function createVariableToMessageBinding(Variable $variable);
+    abstract public function createVariableToMessageBinding(Variable $variable);
 
-    protected function createVariableToMessageBindingWithMessage(Variable $variable, Message $message)
+    protected function createVariableToMessageBindingWithMessage(Variable $variable, Message $message): Message
     {
         $this->_messageToVariableBinding->setValue($message, $variable);
         $this->_messages[] = $message;
         $this->_variables[] = $variable;
+
         return $message;
     }
 

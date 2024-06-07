@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 use Exception;
 
@@ -7,7 +11,7 @@ class DefaultVariable extends Variable
 {
     public function __construct()
     {
-        parent::__construct("Default", null);
+        parent::__construct('Default', null);
     }
 
     public function getValue()

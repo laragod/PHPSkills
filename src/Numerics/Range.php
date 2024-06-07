@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\Numerics;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\Numerics;
 
 // The whole purpose of this class is to make the code for the SkillCalculator(s)
 // look a little cleaner
@@ -8,13 +12,13 @@ use Exception;
 class Range
 {
     private $_min;
+
     private $_max;
-    
+
     public function __construct($min, $max)
     {
-        if ($min > $max)
-        {
-            throw new Exception("min > max");
+        if ($min > $max) {
+            throw new Exception('min > max');
         }
 
         $this->_min = $min;
@@ -24,14 +28,14 @@ class Range
     public function getMin()
     {
         return $this->_min;
-    }    
-    
+    }
+
     public function getMax()
     {
         return $this->_max;
     }
-    
-    protected static function create($min, $max)
+
+    protected static function create($min, $max): Range
     {
         return new Range($min, $max);
     }
@@ -50,10 +54,10 @@ class Range
 
     public static function atLeast($minimumValue)
     {
-        return static::create($minimumValue, PHP_INT_MAX );
+        return static::create($minimumValue, PHP_INT_MAX);
     }
 
-    public function isInRange($value)
+    public function isInRange($value): bool
     {
         return ($this->_min <= $value) && ($value <= $this->_max);
     }

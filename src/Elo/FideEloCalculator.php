@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills\Elo;
+<?php
 
-use Moserware\Skills\GameInfo;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Elo;
+
+use Laragod\Skills\GameInfo;
 
 /**
  * Including Elo's scheme as a simple comparison.
@@ -14,17 +18,17 @@ class FideEloCalculator extends TwoPlayerEloCalculator
         parent::__construct($kFactor);
     }
 
-    public static function createWithDefaultKFactor()
+    public static function createWithDefaultKFactor(): FideEloCalculator
     {
         return new FideEloCalculator(new FideKFactor());
     }
 
-    public static function createWithProvisionalKFactor()
+    public static function createWithProvisionalKFactor(): FideEloCalculator
     {
         return new FideEloCalculator(new ProvisionalFideKFactor());
     }
 
-    public function getPlayerWinProbability(GameInfo $gameInfo, $playerRating, $opponentRating)
+    public function getPlayerWinProbability(GameInfo $gameInfo, $playerRating, $opponentRating): float
     {
         $ratingDifference = $opponentRating - $playerRating;
 

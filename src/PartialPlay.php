@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills;
 
 class PartialPlay
 {
@@ -6,7 +10,7 @@ class PartialPlay
     {
         // If the player doesn't support the interface, assume 1.0 == 100%
         $supportsPartialPlay = $player instanceof ISupportPartialPlay;
-        if (!$supportsPartialPlay) {
+        if (! $supportsPartialPlay) {
             return 1.0;
         }
 

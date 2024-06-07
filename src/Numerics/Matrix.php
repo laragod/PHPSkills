@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\Numerics;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\Numerics;
 
 use Exception;
 
@@ -7,7 +11,9 @@ class Matrix
     const ERROR_TOLERANCE = 0.0000000001;
 
     private $_matrixRowData;
+
     private $_rowCount;
+
     private $_columnCount;
 
     public function __construct($rows = 0, $columns = 0, $matrixData = null)
@@ -17,9 +23,9 @@ class Matrix
         $this->_matrixRowData = $matrixData;
     }
 
-    public static function fromColumnValues($rows, $columns, $columnValues)
+    public static function fromColumnValues($rows, $columns, $columnValues): Matrix
     {
-        $data = array();
+        $data = [];
         $result = new Matrix($rows, $columns, $data);
 
         for ($currentColumn = 0; $currentColumn < $columns; $currentColumn++) {
@@ -33,7 +39,7 @@ class Matrix
         return $result;
     }
 
-    public static function fromRowsColumns()
+    public static function fromRowsColumns(): Matrix
     {
         $args = \func_get_args();
         $rows = $args[0];
@@ -70,18 +76,18 @@ class Matrix
         $this->_matrixRowData[$row][$col] = $value;
     }
 
-    public function getTranspose()
+    public function getTranspose(): Matrix
     {
         // Just flip everything
-        $transposeMatrix = array();
+        $transposeMatrix = [];
 
         $rowMatrixData = $this->_matrixRowData;
         for ($currentRowTransposeMatrix = 0;
-             $currentRowTransposeMatrix < $this->_columnCount;
-             $currentRowTransposeMatrix++) {
+            $currentRowTransposeMatrix < $this->_columnCount;
+            $currentRowTransposeMatrix++) {
             for ($currentColumnTransposeMatrix = 0;
-                 $currentColumnTransposeMatrix < $this->_rowCount;
-                 $currentColumnTransposeMatrix++) {
+                $currentColumnTransposeMatrix < $this->_rowCount;
+                $currentColumnTransposeMatrix++) {
                 $transposeMatrix[$currentRowTransposeMatrix][$currentColumnTransposeMatrix] =
                     $rowMatrixData[$currentColumnTransposeMatrix][$currentRowTransposeMatrix];
             }
@@ -90,7 +96,7 @@ class Matrix
         return new Matrix($this->_columnCount, $this->_rowCount, $transposeMatrix);
     }
 
-    private function isSquare()
+    private function isSquare(): bool
     {
         return ($this->_rowCount == $this->_columnCount) && ($this->_rowCount > 0);
     }
@@ -98,8 +104,8 @@ class Matrix
     public function getDeterminant()
     {
         // Basic argument checking
-        if (!$this->isSquare()) {
-            throw new Exception("Matrix must be square!");
+        if (! $this->isSquare()) {
+            throw new Exception('Matrix must be square!');
         }
 
         if ($this->_rowCount == 1) {
@@ -117,6 +123,7 @@ class Matrix
             $b = $this->_matrixRowData[0][1];
             $c = $this->_matrixRowData[1][0];
             $d = $this->_matrixRowData[1][1];
+
             return $a * $d - $b * $c;
         }
 
@@ -141,8 +148,8 @@ class Matrix
 
     public function getAdjugate()
     {
-        if (!$this->isSquare()) {
-            throw new Exception("Matrix must be square!");
+        if (! $this->isSquare()) {
+            throw new Exception('Matrix must be square!');
         }
 
         // See http://en.wikipedia.org/wiki/Adjugate_matrix
@@ -165,7 +172,7 @@ class Matrix
         }
 
         // The idea is that it's the transpose of the cofactors
-        $result = array();
+        $result = [];
 
         for ($currentColumn = 0; $currentColumn < $this->_columnCount; $currentColumn++) {
             for ($currentRow = 0; $currentRow < $this->_rowCount; $currentRow++) {
@@ -190,11 +197,11 @@ class Matrix
         return self::scalarMultiply($determinantInverse, $adjugate);
     }
 
-    public static function scalarMultiply($scalarValue, $matrix)
+    public static function scalarMultiply($scalarValue, $matrix): Matrix
     {
         $rows = $matrix->getRowCount();
         $columns = $matrix->getColumnCount();
-        $newValues = array();
+        $newValues = [];
 
         for ($currentRow = 0; $currentRow < $rows; $currentRow++) {
             for ($currentColumn = 0; $currentColumn < $columns; $currentColumn++) {
@@ -205,19 +212,19 @@ class Matrix
         return new Matrix($rows, $columns, $newValues);
     }
 
-    public static function add($left, $right)
+    public static function add($left, $right): Matrix
     {
         if (
             ($left->getRowCount() != $right->getRowCount())
             ||
             ($left->getColumnCount() != $right->getColumnCount())
         ) {
-            throw new Exception("Matrices must be of the same size");
+            throw new Exception('Matrices must be of the same size');
         }
 
         // simple addition of each item
 
-        $resultMatrix = array();
+        $resultMatrix = [];
 
         for ($currentRow = 0; $currentRow < $left->getRowCount(); $currentRow++) {
             for ($currentColumn = 0; $currentColumn < $right->getColumnCount(); $currentColumn++) {
@@ -231,19 +238,19 @@ class Matrix
         return new Matrix($left->getRowCount(), $right->getColumnCount(), $resultMatrix);
     }
 
-    public static function multiply($left, $right)
+    public static function multiply($left, $right): Matrix
     {
         // Just your standard matrix multiplication.
         // See http://en.wikipedia.org/wiki/Matrix_multiplication for details
 
         if ($left->getColumnCount() != $right->getRowCount()) {
-            throw new Exception("The width of the left matrix must match the height of the right matrix");
+            throw new Exception('The width of the left matrix must match the height of the right matrix');
         }
 
         $resultRows = $left->getRowCount();
         $resultColumns = $right->getColumnCount();
 
-        $resultMatrix = array();
+        $resultMatrix = [];
 
         for ($currentRow = 0; $currentRow < $resultRows; $currentRow++) {
             for ($currentColumn = 0; $currentColumn < $resultColumns; $currentColumn++) {
@@ -263,12 +270,12 @@ class Matrix
         return new Matrix($resultRows, $resultColumns, $resultMatrix);
     }
 
-    private function getMinorMatrix($rowToRemove, $columnToRemove)
+    private function getMinorMatrix($rowToRemove, $columnToRemove): Matrix
     {
         // See http://en.wikipedia.org/wiki/Minor_(linear_algebra)
 
         // I'm going to use a horribly naïve algorithm... because I can :)
-        $result = array();
+        $result = [];
 
         $actualRow = 0;
 
@@ -309,7 +316,7 @@ class Matrix
         }
     }
 
-    public function equals($otherMatrix)
+    public function equals($otherMatrix): bool
     {
         // If one is null, but not both, return false.
         if ($otherMatrix == null) {

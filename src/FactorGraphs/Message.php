@@ -1,8 +1,13 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 class Message
 {
     private $_name;
+
     private $_value;
 
     public function __construct($value = null, $name = null)
@@ -23,6 +28,6 @@ class Message
 
     public function __toString()
     {
-        return (string)$this->_name;
+        return (string) $this->_name;
     }
 }

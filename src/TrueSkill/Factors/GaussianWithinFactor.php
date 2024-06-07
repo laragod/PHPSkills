@@ -1,9 +1,13 @@
-<?php namespace Moserware\Skills\TrueSkill\Factors;
+<?php
 
-use Moserware\Skills\Numerics\GaussianDistribution;
-use Moserware\Skills\TrueSkill\TruncatedGaussianCorrectionFunctions;
-use Moserware\Skills\FactorGraphs\Message;
-use Moserware\Skills\FactorGraphs\Variable;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill\Factors;
+
+use Laragod\Skills\FactorGraphs\Message;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\TrueSkill\TruncatedGaussianCorrectionFunctions;
 
 /**
  * Factor representing a team difference that has not exceeded the draw margin.
@@ -16,7 +20,7 @@ class GaussianWithinFactor extends GaussianFactor
 
     public function __construct($epsilon, Variable $variable)
     {
-        parent::__construct(sprintf("%s <= %.2f", $variable, $epsilon));
+        parent::__construct(sprintf('%s <= %.2f', $variable, $epsilon));
         $this->_epsilon = $epsilon;
         $this->createVariableToMessageBinding($variable);
     }
@@ -57,10 +61,10 @@ class GaussianWithinFactor extends GaussianFactor
 
         $denominator = 1.0 - TruncatedGaussianCorrectionFunctions::wWithinMargin($dOnSqrtC, $epsilonTimesSqrtC);
         $newPrecision = $c / $denominator;
-        $newPrecisionMean = (   $d +
+        $newPrecisionMean = ($d +
                                 $sqrtC *
                                 TruncatedGaussianCorrectionFunctions::vWithinMargin($dOnSqrtC, $epsilonTimesSqrtC)
-                            ) / $denominator;
+        ) / $denominator;
 
         $newMarginal = GaussianDistribution::fromPrecisionMean($newPrecisionMean, $newPrecision);
         $newMessage = GaussianDistribution::divide(

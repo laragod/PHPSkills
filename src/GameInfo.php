@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills;
 
 /**
  * Parameters about the game for calculating the TrueSkill.
@@ -6,22 +10,30 @@
 class GameInfo
 {
     const DEFAULT_BETA = 4.1666666666666666666666666666667; // Default initial mean / 6
+
     const DEFAULT_DRAW_PROBABILITY = 0.10;
+
     const DEFAULT_DYNAMICS_FACTOR = 0.083333333333333333333333333333333; // Default initial mean / 300
+
     const DEFAULT_INITIAL_MEAN = 25.0;
+
     const DEFAULT_INITIAL_STANDARD_DEVIATION = 8.3333333333333333333333333333333; // Default initial mean / 3
 
     private $_initialMean;
+
     private $_initialStandardDeviation;
+
     private $_beta;
+
     private $_dynamicsFactor;
+
     private $_drawProbability;
 
     public function __construct($initialMean = self::DEFAULT_INITIAL_MEAN,
-                                $initialStandardDeviation = self::DEFAULT_INITIAL_STANDARD_DEVIATION,
-                                $beta = self::DEFAULT_BETA,
-                                $dynamicsFactor = self::DEFAULT_DYNAMICS_FACTOR,
-                                $drawProbability = self::DEFAULT_DRAW_PROBABILITY)
+        $initialStandardDeviation = self::DEFAULT_INITIAL_STANDARD_DEVIATION,
+        $beta = self::DEFAULT_BETA,
+        $dynamicsFactor = self::DEFAULT_DYNAMICS_FACTOR,
+        $drawProbability = self::DEFAULT_DRAW_PROBABILITY)
     {
         $this->_initialMean = $initialMean;
         $this->_initialStandardDeviation = $initialStandardDeviation;
@@ -29,7 +41,6 @@ class GameInfo
         $this->_dynamicsFactor = $dynamicsFactor;
         $this->_drawProbability = $drawProbability;
     }
-
 
     public function getInitialMean()
     {
@@ -56,7 +67,7 @@ class GameInfo
         return $this->_drawProbability;
     }
 
-    public function getDefaultRating()
+    public function getDefaultRating(): Rating
     {
         return new Rating($this->_initialMean, $this->_initialStandardDeviation);
     }

@@ -1,24 +1,30 @@
-<?php namespace Moserware\Skills\TrueSkill;
+<?php
 
-use Moserware\Skills\GameInfo;
-use Moserware\Skills\Numerics\GaussianDistribution;
-use Moserware\Skills\Rating;
-use Moserware\Skills\RatingContainer;
-use Moserware\Skills\FactorGraphs\FactorGraph;
-use Moserware\Skills\FactorGraphs\FactorList;
-use Moserware\Skills\FactorGraphs\ScheduleSequence;
-use Moserware\Skills\FactorGraphs\VariableFactory;
-use Moserware\Skills\TrueSkill\Layers\IteratedTeamDifferencesInnerLayer;
-use Moserware\Skills\TrueSkill\Layers\PlayerPerformancesToTeamPerformancesLayer;
-use Moserware\Skills\TrueSkill\Layers\PlayerPriorValuesToSkillsLayer;
-use Moserware\Skills\TrueSkill\Layers\PlayerSkillsToPerformancesLayer;
-use Moserware\Skills\TrueSkill\Layers\TeamDifferencesComparisonLayer;
-use Moserware\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferencesLayer;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill;
+
+use Laragod\Skills\FactorGraphs\FactorGraph;
+use Laragod\Skills\FactorGraphs\FactorList;
+use Laragod\Skills\FactorGraphs\ScheduleSequence;
+use Laragod\Skills\FactorGraphs\VariableFactory;
+use Laragod\Skills\GameInfo;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\Rating;
+use Laragod\Skills\RatingContainer;
+use Laragod\Skills\TrueSkill\Layers\IteratedTeamDifferencesInnerLayer;
+use Laragod\Skills\TrueSkill\Layers\PlayerPerformancesToTeamPerformancesLayer;
+use Laragod\Skills\TrueSkill\Layers\PlayerPriorValuesToSkillsLayer;
+use Laragod\Skills\TrueSkill\Layers\PlayerSkillsToPerformancesLayer;
+use Laragod\Skills\TrueSkill\Layers\TeamDifferencesComparisonLayer;
+use Laragod\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferencesLayer;
 
 class TrueSkillFactorGraph extends FactorGraph
 {
     private $_gameInfo;
+
     private $_layers;
+
     private $_priorLayer;
 
     public function __construct(GameInfo $gameInfo, array $teams, array $teamRanks)
@@ -31,18 +37,18 @@ class TrueSkillFactorGraph extends FactorGraph
             });
 
         $this->setVariableFactory($newFactory);
-        $this->_layers = array(
+        $this->_layers = [
             $this->_priorLayer,
             new PlayerSkillsToPerformancesLayer($this),
             new PlayerPerformancesToTeamPerformancesLayer($this),
             new IteratedTeamDifferencesInnerLayer(
                 $this,
                 new TeamPerformancesToTeamPerformanceDifferencesLayer($this),
-                new TeamDifferencesComparisonLayer($this, $teamRanks))
-        );
+                new TeamDifferencesComparisonLayer($this, $teamRanks)),
+        ];
     }
 
-    public function getGameInfo()
+    public function getGameInfo(): GameInfo
     {
         return $this->_gameInfo;
     }
@@ -69,7 +75,7 @@ class TrueSkillFactorGraph extends FactorGraph
         $fullScheduleDelta = $fullSchedule->visit();
     }
 
-    public function getProbabilityOfRanking()
+    public function getProbabilityOfRanking(): float
     {
         $factorList = new FactorList();
 
@@ -83,12 +89,13 @@ class TrueSkillFactorGraph extends FactorGraph
         }
 
         $logZ = $factorList->getLogNormalization();
+
         return exp($logZ);
     }
 
-    private function createFullSchedule()
+    private function createFullSchedule(): ScheduleSequence
     {
-        $fullSchedule = array();
+        $fullSchedule = [];
 
         $layers = $this->_layers;
         foreach ($layers as $currentLayer) {
@@ -107,10 +114,10 @@ class TrueSkillFactorGraph extends FactorGraph
             }
         }
 
-        return new ScheduleSequence("Full schedule", $fullSchedule);
+        return new ScheduleSequence('Full schedule', $fullSchedule);
     }
 
-    public function getUpdatedRatings()
+    public function getUpdatedRatings(): RatingContainer
     {
         $result = new RatingContainer();
 

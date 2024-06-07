@@ -1,10 +1,14 @@
-<?php namespace Moserware\Skills\Tests\Elo;
+<?php
 
-use Moserware\Skills\Elo\EloRating;
-use Moserware\Skills\Elo\FideEloCalculator;
-use Moserware\Skills\GameInfo;
-use Moserware\Skills\PairwiseComparison;
-use Moserware\Skills\Tests\TestCase;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\Elo;
+
+use Laragod\Skills\Elo\EloRating;
+use Laragod\Skills\Elo\FideEloCalculator;
+use Laragod\Skills\GameInfo;
+use Laragod\Skills\PairwiseComparison;
+use Laragod\Skills\Tests\TestCase;
 
 class EloAssert
 {
@@ -19,13 +23,13 @@ class EloAssert
         $player1AfterRating,
         $player2AfterRating)
     {
-        $player1 = "Player1";
-        $player2 = "Player2";
+        $player1 = 'Player1';
+        $player2 = 'Player2';
 
-        $teams = array(
-            array($player1 => new EloRating($player1BeforeRating)),
-            array($player2 => new EloRating($player2BeforeRating))
-        );
+        $teams = [
+            [$player1 => new EloRating($player1BeforeRating)],
+            [$player2 => new EloRating($player2BeforeRating)],
+        ];
 
         $chessGameInfo = new GameInfo(1200, 0, 200);
 

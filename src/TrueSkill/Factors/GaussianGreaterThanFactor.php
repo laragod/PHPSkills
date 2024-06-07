@@ -1,9 +1,13 @@
-<?php namespace Moserware\Skills\TrueSkill\Factors;
+<?php
 
-use Moserware\Skills\Numerics\GaussianDistribution;
-use Moserware\Skills\TrueSkill\TruncatedGaussianCorrectionFunctions;
-use Moserware\Skills\FactorGraphs\Message;
-use Moserware\Skills\FactorGraphs\Variable;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill\Factors;
+
+use Laragod\Skills\FactorGraphs\Message;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\TrueSkill\TruncatedGaussianCorrectionFunctions;
 
 /**
  * Factor representing a team difference that has exceeded the draw margin.
@@ -16,7 +20,7 @@ class GaussianGreaterThanFactor extends GaussianFactor
 
     public function __construct($epsilon, Variable $variable)
     {
-        parent::__construct(\sprintf("%s > %.2f", $variable, $epsilon));
+        parent::__construct(\sprintf('%s > %.2f', $variable, $epsilon));
         $this->_epsilon = $epsilon;
         $this->createVariableToMessageBinding($variable);
     }
@@ -31,6 +35,7 @@ class GaussianGreaterThanFactor extends GaussianFactor
         $messages = $this->getMessages();
         $message = $messages[0]->getValue();
         $messageFromVariable = GaussianDistribution::divide($marginal, $message);
+
         return -GaussianDistribution::logProductNormalization($messageFromVariable, $message)
         +
         log(
@@ -62,10 +67,10 @@ class GaussianGreaterThanFactor extends GaussianFactor
 
         $newPrecision = $c / $denom;
         $newPrecisionMean = (
-                $d +
-                $sqrtC *
-                TruncatedGaussianCorrectionFunctions::vExceedsMargin($dOnSqrtC, $epsilsonTimesSqrtC)
-            ) / $denom;
+            $d +
+            $sqrtC *
+            TruncatedGaussianCorrectionFunctions::vExceedsMargin($dOnSqrtC, $epsilsonTimesSqrtC)
+        ) / $denom;
 
         $newMarginal = GaussianDistribution::fromPrecisionMean($newPrecisionMean, $newPrecision);
 

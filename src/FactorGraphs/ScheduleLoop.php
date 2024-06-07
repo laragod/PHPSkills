@@ -1,8 +1,13 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 class ScheduleLoop extends Schedule
 {
     private $_maxDelta;
+
     private $_scheduleToLoop;
 
     public function __construct($name, Schedule $scheduleToLoop, $maxDelta)

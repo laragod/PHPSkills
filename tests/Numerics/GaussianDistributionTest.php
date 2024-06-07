@@ -1,8 +1,12 @@
-<?php namespace Moserware\Skills\Tests\Numerics;
+<?php
 
-use Moserware\Skills\Numerics\BasicMath;
-use Moserware\Skills\Numerics\GaussianDistribution;
-use Moserware\Skills\Tests\TestCase;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\Numerics;
+
+use Laragod\Skills\Numerics\BasicMath;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\Tests\TestCase;
 
 class GaussianDistributionTest extends TestCase
 {
@@ -76,7 +80,7 @@ class GaussianDistributionTest extends TestCase
 
     public function testLogRatioNormalization()
     {
-        // Verified with Ralf Herbrich's F# implementation            
+        // Verified with Ralf Herbrich's F# implementation
         $m1s2 = new GaussianDistribution(1, 2);
         $m3s4 = new GaussianDistribution(3, 4);
         $lrn = GaussianDistribution::logRatioNormalization($m1s2, $m3s4);
@@ -85,7 +89,7 @@ class GaussianDistributionTest extends TestCase
 
     public function testAbsoluteDifference()
     {
-        // Verified with Ralf Herbrich's F# implementation            
+        // Verified with Ralf Herbrich's F# implementation
         $standardNormal = new GaussianDistribution(0, 1);
         $absDiff = GaussianDistribution::absoluteDifference($standardNormal, $standardNormal);
         $this->assertEquals(0.0, $absDiff, '', GaussianDistributionTest::ERROR_TOLERANCE);

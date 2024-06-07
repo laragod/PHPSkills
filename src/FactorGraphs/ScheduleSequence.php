@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 class ScheduleSequence extends Schedule
 {

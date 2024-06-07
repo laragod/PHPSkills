@@ -1,10 +1,18 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
+
 // edit this
 abstract class FactorGraphLayer
 {
-    private $_localFactors = array();
-    private $_outputVariablesGroups = array();    
-    private $_inputVariablesGroups = array();
+    private $_localFactors = [];
+
+    private $_outputVariablesGroups = [];
+
+    private $_inputVariablesGroups = [];
+
     private $_parentFactorGraph;
 
     protected function __construct(FactorGraph $parentGraph)
@@ -12,29 +20,27 @@ abstract class FactorGraphLayer
         $this->_parentFactorGraph = $parentGraph;
     }
 
-    protected function getInputVariablesGroups()
+    protected function getInputVariablesGroups(): array
     {
         return $this->_inputVariablesGroups;
     }
 
     // HACK
 
-    public function getParentFactorGraph()
+    public function getParentFactorGraph(): FactorGraph
     {
         return $this->_parentFactorGraph;
     }
 
     /**
      * This reference is still needed
-     *
-     * @return array
      */
-    public function &getOutputVariablesGroups()
+    public function &getOutputVariablesGroups(): array
     {
         return $this->_outputVariablesGroups;
     }
 
-    public function getLocalFactors()
+    public function getLocalFactors(): array
     {
         return $this->_localFactors;
     }
@@ -44,7 +50,7 @@ abstract class FactorGraphLayer
         $this->_inputVariablesGroups = $value;
     }
 
-    protected function scheduleSequence(array $itemsToSequence, $name)
+    protected function scheduleSequence(array $itemsToSequence, $name): ScheduleSequence
     {
         return new ScheduleSequence($name, $itemsToSequence);
     }
@@ -54,7 +60,7 @@ abstract class FactorGraphLayer
         $this->_localFactors[] = $factor;
     }
 
-    public abstract function buildLayer();
+    abstract public function buildLayer();
 
     public function createPriorSchedule()
     {

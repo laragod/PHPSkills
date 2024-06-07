@@ -1,19 +1,21 @@
-<?php namespace Moserware\Skills\TrueSkill;
+<?php
 
-use Moserware\Skills\GameInfo;
-use Moserware\Skills\Guard;
-use Moserware\Skills\Numerics\BasicMath;
-use Moserware\Skills\PairwiseComparison;
-use Moserware\Skills\RankSorter;
-use Moserware\Skills\Rating;
-use Moserware\Skills\RatingContainer;
-use Moserware\Skills\SkillCalculator;
-use Moserware\Skills\SkillCalculatorSupportedOptions;
+declare(strict_types=1);
 
-use Moserware\Skills\PlayersRange;
-use Moserware\Skills\TeamsRange;
+namespace Laragod\Skills\TrueSkill;
 
-use Moserware\Skills\Team;
+use Laragod\Skills\GameInfo;
+use Laragod\Skills\Guard;
+use Laragod\Skills\Numerics\BasicMath;
+use Laragod\Skills\PairwiseComparison;
+use Laragod\Skills\PlayersRange;
+use Laragod\Skills\RankSorter;
+use Laragod\Skills\Rating;
+use Laragod\Skills\RatingContainer;
+use Laragod\Skills\SkillCalculator;
+use Laragod\Skills\SkillCalculatorSupportedOptions;
+use Laragod\Skills\Team;
+use Laragod\Skills\TeamsRange;
 
 /**
  * Calculates new ratings for only two teams where each team has 1 or more players.
@@ -27,9 +29,9 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
         parent::__construct(SkillCalculatorSupportedOptions::NONE, TeamsRange::exactly(2), PlayersRange::atLeast(1));
     }
 
-    public function calculateNewRatings(GameInfo $gameInfo, array $teams, array $teamRanks)
+    public function calculateNewRatings(GameInfo $gameInfo, array $teams, array $teamRanks): RatingContainer
     {
-        Guard::argumentNotNull($gameInfo, "gameInfo");
+        Guard::argumentNotNull($gameInfo, 'gameInfo');
         $this->validateTeamCountAndPlayersCountPerTeam($teams);
 
         RankSorter::sort($teams, $teamRanks);
@@ -57,10 +59,10 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
     }
 
     private static function updatePlayerRatings(GameInfo $gameInfo,
-                                                RatingContainer $newPlayerRatings,
-                                                Team $selfTeam,
-                                                Team $otherTeam,
-                                                $selfToOtherTeamComparison)
+        RatingContainer $newPlayerRatings,
+        Team $selfTeam,
+        Team $otherTeam,
+        $selfToOtherTeamComparison)
     {
         $drawMargin = DrawMargin::getDrawMarginFromDrawProbability(
             $gameInfo->getDrawProbability(),
@@ -111,7 +113,7 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
             // non-draw case
             $v = TruncatedGaussianCorrectionFunctions::vExceedsMarginScaled($meanDelta, $drawMargin, $c);
             $w = TruncatedGaussianCorrectionFunctions::wExceedsMarginScaled($meanDelta, $drawMargin, $c);
-            $rankMultiplier = (int)$selfToOtherTeamComparison;
+            $rankMultiplier = (int) $selfToOtherTeamComparison;
         } else {
             // assume draw
             $v = TruncatedGaussianCorrectionFunctions::vWithinMarginScaled($meanDelta, $drawMargin, $c);
@@ -141,9 +143,9 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
     /**
      * {@inheritdoc}
      */
-    public function calculateMatchQuality(GameInfo $gameInfo, array $teams)
+    public function calculateMatchQuality(GameInfo $gameInfo, array $teams): float
     {
-        Guard::argumentNotNull($gameInfo, "gameInfo");
+        Guard::argumentNotNull($gameInfo, 'gameInfo');
         $this->validateTeamCountAndPlayersCountPerTeam($teams);
 
         // We've verified that there's just two teams

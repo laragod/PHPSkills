@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\Elo;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\Elo;
 
 class KFactor
 {

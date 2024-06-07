@@ -1,15 +1,20 @@
 <?php
-namespace Moserware\Skills\FactorGraphs;
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 class Variable
 {
     private $_name;
+
     private $_prior;
+
     private $_value;
 
     public function __construct($name, $prior)
     {
-        $this->_name = "Variable[" . $name . "]";
+        $this->_name = 'Variable['.$name.']';
         $this->_prior = $prior;
         $this->resetToPrior();
     }

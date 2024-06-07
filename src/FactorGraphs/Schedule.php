@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 abstract class Schedule
 {
@@ -9,7 +13,7 @@ abstract class Schedule
         $this->_name = $name;
     }
 
-    public abstract function visit($depth = -1, $maxDepth = 0);
+    abstract public function visit($depth = -1, $maxDepth = 0);
 
     public function __toString()
     {

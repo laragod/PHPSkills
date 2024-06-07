@@ -1,18 +1,22 @@
-<?php namespace Moserware\Skills\Tests;
+<?php
 
-use Moserware\Skills\RankSorter;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests;
+
+use Laragod\Skills\RankSorter;
 
 class RankSorterTest extends TestCase
 {
     public function testSort()
     {
-        $team1 = array("a" => 1, "b" => 2);
-        $team2 = array("c" => 3, "d" => 4);
-        $team3 = array("e" => 5, "f" => 6);
+        $team1 = ['a' => 1, 'b' => 2];
+        $team2 = ['c' => 3, 'd' => 4];
+        $team3 = ['e' => 5, 'f' => 6];
 
-        $teams = array($team1, $team2, $team3);
+        $teams = [$team1, $team2, $team3];
 
-        $teamRanks = array(3, 1, 2);
+        $teamRanks = [3, 1, 2];
 
         $sortedRanks = RankSorter::sort($teams, $teamRanks);
 

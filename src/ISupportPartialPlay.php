@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills;
 
 /**
  * Indicates support for allowing partial play (where a player only plays a part of the time).

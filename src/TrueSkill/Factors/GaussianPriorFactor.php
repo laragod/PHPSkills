@@ -1,8 +1,12 @@
-<?php namespace Moserware\Skills\TrueSkill\Factors;
+<?php
 
-use Moserware\Skills\FactorGraphs\Message;
-use Moserware\Skills\FactorGraphs\Variable;
-use Moserware\Skills\Numerics\GaussianDistribution;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill\Factors;
+
+use Laragod\Skills\FactorGraphs\Message;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
 
 /**
  * Supplies the factor graph with prior information.
@@ -15,10 +19,10 @@ class GaussianPriorFactor extends GaussianFactor
 
     public function __construct($mean, $variance, Variable $variable)
     {
-        parent::__construct(sprintf("Prior value going to %s", $variable));
+        parent::__construct(sprintf('Prior value going to %s', $variable));
         $this->_newMessage = new GaussianDistribution($mean, sqrt($variance));
         $newMessage = new Message(GaussianDistribution::fromPrecisionMean(0, 0),
-            sprintf("message from %s to %s", $this, $variable));
+            sprintf('message from %s to %s', $this, $variable));
 
         $this->createVariableToMessageBindingWithMessage($variable, $newMessage);
     }
@@ -34,6 +38,7 @@ class GaussianPriorFactor extends GaussianFactor
 
         $variable->setValue($newMarginal);
         $message->setValue($this->_newMessage);
+
         return GaussianDistribution::subtract($oldMarginal, $newMarginal);
     }
 }

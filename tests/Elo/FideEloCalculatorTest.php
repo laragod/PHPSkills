@@ -1,9 +1,13 @@
-<?php namespace Moserware\Skills\Tests\Elo;
+<?php
 
-use Moserware\Skills\Elo\FideEloCalculator;
-use Moserware\Skills\Elo\ProvisionalFideKFactor;
-use Moserware\Skills\PairwiseComparison;
-use Moserware\Skills\Tests\TestCase;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\Elo;
+
+use Laragod\Skills\Elo\FideEloCalculator;
+use Laragod\Skills\Elo\ProvisionalFideKFactor;
+use Laragod\Skills\PairwiseComparison;
+use Laragod\Skills\Tests\TestCase;
 
 class FideEloCalculatorTest extends TestCase
 {

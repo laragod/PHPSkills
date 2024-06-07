@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills\TrueSkill;
+<?php
 
-use Moserware\Skills\Numerics\GaussianDistribution;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill;
+
+use Laragod\Skills\Numerics\GaussianDistribution;
 
 final class DrawMargin
 {

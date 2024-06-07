@@ -1,13 +1,18 @@
-<?php namespace Moserware\Skills\TrueSkill\Layers;
+<?php
 
-use Moserware\Skills\TrueSkill\DrawMargin;
-use Moserware\Skills\TrueSkill\TrueSkillFactorGraph;
-use Moserware\Skills\TrueSkill\Factors\GaussianGreaterThanFactor;
-use Moserware\Skills\TrueSkill\Factors\GaussianWithinFactor;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill\Layers;
+
+use Laragod\Skills\TrueSkill\DrawMargin;
+use Laragod\Skills\TrueSkill\Factors\GaussianGreaterThanFactor;
+use Laragod\Skills\TrueSkill\Factors\GaussianWithinFactor;
+use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 
 class TeamDifferencesComparisonLayer extends TrueSkillFactorGraphLayer
 {
     private $_epsilon;
+
     private $_teamRanks;
 
     public function __construct(TrueSkillFactorGraph $parentGraph, array $teamRanks)

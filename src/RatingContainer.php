@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills;
 
 class RatingContainer
 {
@@ -14,22 +18,22 @@ class RatingContainer
         return $this->_playerToRating->getValue($player);
     }
 
-    public function setRating(Player $player, Rating $rating)
+    public function setRating(Player $player, Rating $rating): HashMap
     {
         return $this->_playerToRating->setValue($player, $rating);
     }
 
-    public function getAllPlayers()
+    public function getAllPlayers(): array
     {
         return $this->_playerToRating->getAllKeys();
     }
 
-    public function getAllRatings()
+    public function getAllRatings(): array
     {
         return $this->_playerToRating->getAllValues();
     }
 
-    public function count()
+    public function count(): int
     {
         return $this->_playerToRating->count();
     }

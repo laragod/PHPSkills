@@ -1,7 +1,11 @@
-<?php namespace Moserware\Skills\Tests\TrueSkill;
+<?php
 
-use Moserware\Skills\Tests\TestCase;
-use Moserware\Skills\TrueSkill\TwoTeamTrueSkillCalculator;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\TrueSkill;
+
+use Laragod\Skills\Tests\TestCase;
+use Laragod\Skills\TrueSkill\TwoTeamTrueSkillCalculator;
 
 class TwoTeamTrueSkillCalculatorTest extends TestCase
 {

@@ -1,11 +1,15 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 /**
  * Helper class for computing the factor graph's normalization constant.
  */
 class FactorList
 {
-    private $_list = array();
+    private $_list = [];
 
     public function getLogNormalization()
     {
@@ -37,14 +41,15 @@ class FactorList
         return $sumLogZ + $sumLogS;
     }
 
-    public function count()
+    public function count(): int
     {
         return count($this->_list);
     }
 
-    public function addFactor(Factor $factor)
+    public function addFactor(Factor $factor): Factor
     {
         $this->_list[] = $factor;
+
         return $factor;
     }
 }

@@ -1,10 +1,14 @@
-<?php namespace Moserware\Skills\TrueSkill\Factors;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill\Factors;
 
 use Exception;
-use Moserware\Skills\FactorGraphs\KeyedVariable;
-use Moserware\Skills\FactorGraphs\Message;
-use Moserware\Skills\FactorGraphs\Variable;
-use Moserware\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\FactorGraphs\KeyedVariable;
+use Laragod\Skills\FactorGraphs\Message;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
 
 /**
  * Connects two variables and adds uncertainty.
@@ -17,7 +21,7 @@ class GaussianLikelihoodFactor extends GaussianFactor
 
     public function __construct($betaSquared, Variable $variable1, Variable $variable2)
     {
-        parent::__construct(sprintf("Likelihood of %s going to %s", $variable2, $variable1));
+        parent::__construct(sprintf('Likelihood of %s going to %s', $variable2, $variable1));
         $this->_precision = 1.0 / $betaSquared;
         $this->createVariableToMessageBinding($variable1);
         $this->createVariableToMessageBinding($variable2);

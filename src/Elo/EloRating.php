@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills\Elo;
+<?php
 
-use Moserware\Skills\Rating;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Elo;
+
+use Laragod\Skills\Rating;
 
 /**
  * An Elo rating represented by a single number (mean).

@@ -1,15 +1,20 @@
-<?php namespace Moserware\Skills\Tests\TrueSkill;
+<?php
 
-use Moserware\Skills\GameInfo;
-use Moserware\Skills\Player;
-use Moserware\Skills\Rating;
-use Moserware\Skills\Team;
-use Moserware\Skills\Teams;
-use Moserware\Skills\SkillCalculator;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\TrueSkill;
+
+use Laragod\Skills\GameInfo;
+use Laragod\Skills\Player;
+use Laragod\Skills\Rating;
+use Laragod\Skills\SkillCalculator;
+use Laragod\Skills\Team;
+use Laragod\Skills\Teams;
 
 class TrueSkillCalculatorTests
 {
     const ERROR_TOLERANCE_TRUESKILL = 0.085;
+
     const ERROR_TOLERANCE_MATCH_QUALITY = 0.0005;
 
     // These are the roll-up ones
@@ -79,10 +84,10 @@ class TrueSkillCalculatorTests
         $gameInfo = new GameInfo();
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
-        $team2 = new Team($player2, $gameInfo->getDefaultRating());;
+        $team2 = new Team($player2, $gameInfo->getDefaultRating());
         $teams = Teams::concat($team1, $team2);
 
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 29.39583201999924, 7.171475587326186, $player1NewRating);
@@ -104,7 +109,7 @@ class TrueSkillCalculatorTests
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 25.0, 6.4575196623173081, $player1NewRating);
@@ -125,7 +130,7 @@ class TrueSkillCalculatorTests
         $team1 = new Team($player1, new Rating(1301.0007, 42.9232));
         $team2 = new Team($player2, new Rating(1188.7560, 42.5570));
 
-        $newRatings = $calculator->calculateNewRatings($gameInfo, Teams::concat($team1, $team2), array(1, 2));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, Teams::concat($team1, $team2), [1, 2]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 1304.7820836053318, 42.843513887848658, $player1NewRating);
@@ -148,7 +153,7 @@ class TrueSkillCalculatorTests
 
         $teams = Teams::concat($team1, $team2);
 
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         // Winners
         self::assertRating($testClass, 31.662, 7.137, $newRatingsWinLose->getRating($player1));
@@ -180,7 +185,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 33.730, 7.317, $newRatingsWinLose->getRating($player1));
@@ -215,7 +220,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 28.108, 7.774, $newRatingsWinLose->getRating($player1));
@@ -245,7 +250,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player3, new Rating(25, 8));
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 42.744, 5.602, $newRatingsWinLose->getRating($player1));
@@ -276,7 +281,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 36.337, 7.527, $newRatingsWinLose->getRating($player1));
@@ -296,7 +301,7 @@ class TrueSkillCalculatorTests
         $gameInfo = new GameInfo();
 
         $team1 = new Team();
-        $team1->addPlayer($player1, $gameInfo->getDefaultRating());;
+        $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
         $player3 = new Player(3);
@@ -306,7 +311,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         // Winners
         self::assertRating($testClass, 31.660, 7.138, $newRatingsWinLose->getRating($player1));
@@ -337,7 +342,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         // Winners
         self::assertRating($testClass, 34.990, 7.455, $newRatingsWinLose->getRating($player1));
@@ -377,7 +382,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player8, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 40.582, 7.917, $newRatingsWinLose->getRating($player1));
@@ -405,7 +410,6 @@ class TrueSkillCalculatorTests
         $team1->addPlayer($player2, new Rating(27, 6));
         $team1->addPlayer($player3, new Rating(26, 5));
 
-
         $player4 = new Player(4);
         $player5 = new Player(5);
 
@@ -416,7 +420,7 @@ class TrueSkillCalculatorTests
         $gameInfo = new GameInfo();
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLoseExpected = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLoseExpected = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 28.658, 6.770, $newRatingsWinLoseExpected->getRating($player1));
@@ -427,7 +431,7 @@ class TrueSkillCalculatorTests
         self::assertRating($testClass, 29.785, 3.958, $newRatingsWinLoseExpected->getRating($player4));
         self::assertRating($testClass, 30.879, 2.983, $newRatingsWinLoseExpected->getRating($player5));
 
-        $newRatingsWinLoseUpset = $calculator->calculateNewRatings($gameInfo, Teams::concat($team1, $team2), array(2, 1));
+        $newRatingsWinLoseUpset = $calculator->calculateNewRatings($gameInfo, Teams::concat($team1, $team2), [2, 1]);
 
         // Winners
         self::assertRating($testClass, 32.012, 3.877, $newRatingsWinLoseUpset->getRating($player4));
@@ -460,7 +464,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, new Rating(30, 3));
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         // Winners
         self::assertRating($testClass, 21.570, 6.556, $newRatingsWinLose->getRating($player1));
@@ -492,7 +496,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, new Rating(40, 5));
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 29.698, 7.008, $newRatingsWinLose->getRating($player1));
@@ -518,7 +522,7 @@ class TrueSkillCalculatorTests
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
         $team1->addPlayer($player2, $gameInfo->getDefaultRating());
         $team1->addPlayer($player3, $gameInfo->getDefaultRating());
-        $team1->addPlayer($player4, $gameInfo->getDefaultRating());;
+        $team1->addPlayer($player4, $gameInfo->getDefaultRating());
 
         $player5 = new Player(5);
         $player6 = new Player(6);
@@ -533,7 +537,7 @@ class TrueSkillCalculatorTests
 
         $teams = Teams::concat($team1, $team2);
 
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         // Winners
         self::assertRating($testClass, 27.198, 8.059, $newRatingsWinLose->getRating($player1));
@@ -569,7 +573,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1]);
 
         // Winners
         self::assertRating($testClass, 25, 7.455, $newRatingsWinLose->getRating($player1));
@@ -581,7 +585,6 @@ class TrueSkillCalculatorTests
 
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
-
 
     private static function threeTeamsOfOneNotDrawn($testClass, SkillCalculator $calculator)
     {
@@ -596,7 +599,7 @@ class TrueSkillCalculatorTests
         $team3 = new Team($player3, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2, $team3);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2, 3));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2, 3]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 31.675352419172107, 6.6559853776206905, $player1NewRating);
@@ -623,7 +626,7 @@ class TrueSkillCalculatorTests
         $team3 = new Team($player3, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2, $team3);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1, 1));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1, 1]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 25.000, 5.698, $player1NewRating);
@@ -652,7 +655,7 @@ class TrueSkillCalculatorTests
 
         $teams = Teams::concat($team1, $team2, $team3, $team4);
 
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2, 3, 4));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2, 3, 4]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 33.206680965631264, 6.3481091698077057, $player1NewRating);
@@ -685,7 +688,7 @@ class TrueSkillCalculatorTests
         $team5 = new Team($player5, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2, $team3, $team4, $team5);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2, 3, 4, 5));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2, 3, 4, 5]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 34.363135705841188, 6.1361528798112692, $player1NewRating);
@@ -727,7 +730,7 @@ class TrueSkillCalculatorTests
         $team8 = new Team($player8, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2, $team3, $team4, $team5, $team6, $team7, $team8);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 1, 1, 1, 1, 1, 1, 1));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 1, 1, 1, 1, 1, 1, 1]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 25.000, 4.592, $player1NewRating);
@@ -779,7 +782,7 @@ class TrueSkillCalculatorTests
         $team8 = new Team($player8, new Rating(45, 1));
 
         $teams = Teams::concat($team1, $team2, $team3, $team4, $team5, $team6, $team7, $team8);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2, 3, 4, 5, 6, 7, 8));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2, 3, 4, 5, 6, 7, 8]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 35.135, 4.506, $player1NewRating);
@@ -854,7 +857,7 @@ class TrueSkillCalculatorTests
 
         $newRatings = $calculator->calculateNewRatings(
             $gameInfo, $teams,
-            array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16));
+            [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]);
 
         $player1NewRating = $newRatings->getRating($player1);
         self::assertRating($testClass, 40.53945776946920, 5.27581643889050, $player1NewRating);
@@ -935,7 +938,7 @@ class TrueSkillCalculatorTests
         $team3->addPlayer($player8, new Rating(30, 2));
 
         $teams = Teams::concat($team1, $team2, $team3);
-        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2, 2));
+        $newRatingsWinLose = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2, 2]);
 
         // Winners
         self::assertRating($testClass, 40.877, 3.840, $newRatingsWinLose->getRating($player1));
@@ -969,7 +972,7 @@ class TrueSkillCalculatorTests
         $team2->addPlayer($p3, $gameInfo->getDefaultRating());
 
         $teams = Teams::concat($team1, $team2);
-        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, array(1, 2));
+        $newRatings = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
 
         $p1NewRating = $newRatings->getRating($p1);
         $p2NewRating = $newRatings->getRating($p2);

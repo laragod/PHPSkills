@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills\TrueSkill;
+<?php
 
-use Moserware\Skills\Numerics\GaussianDistribution;
+declare(strict_types=1);
+
+namespace Laragod\Skills\TrueSkill;
+
+use Laragod\Skills\Numerics\GaussianDistribution;
 
 class TruncatedGaussianCorrectionFunctions
 {
@@ -12,9 +16,7 @@ class TruncatedGaussianCorrectionFunctions
      * In the reference F# implementation, this is referred to as "the additive
      * correction of a single-sided truncated Gaussian with unit variance."
      *
-     * @param $teamPerformanceDifference
-     * @param number $drawMargin In the paper, it's referred to as just "ε".
-     * @param $c
+     * @param  number  $drawMargin  In the paper, it's referred to as just "ε".
      * @return float
      */
     public static function vExceedsMarginScaled($teamPerformanceDifference, $drawMargin, $c)
@@ -39,9 +41,6 @@ class TruncatedGaussianCorrectionFunctions
      * In the reference F# implementation, this is referred to as "the multiplicative
      * correction of a single-sided truncated Gaussian with unit variance."
      *
-     * @param $teamPerformanceDifference
-     * @param $drawMargin
-     * @param $c
      * @return float
      */
     public static function wExceedsMarginScaled($teamPerformanceDifference, $drawMargin, $c)
@@ -57,10 +56,12 @@ class TruncatedGaussianCorrectionFunctions
             if ($teamPerformanceDifference < 0.0) {
                 return 1.0;
             }
+
             return 0.0;
         }
 
         $vWin = self::vExceedsMargin($teamPerformanceDifference, $drawMargin);
+
         return $vWin * ($vWin + $teamPerformanceDifference - $drawMargin);
     }
 

@@ -1,6 +1,10 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
 
-class FactorGraph
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
+
+abstract class FactorGraph
 {
     private $_variableFactory;
 
@@ -13,4 +17,6 @@ class FactorGraph
     {
         $this->_variableFactory = $factory;
     }
+
+    abstract public function getGameInfo();
 }

@@ -1,14 +1,18 @@
-<?php namespace Moserware\Skills\Numerics;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\Numerics;
 
 class SquareMatrix extends Matrix
 {
     public function __construct()
     {
         $allValues = func_get_args();
-        $rows = (int)sqrt(count($allValues));
+        $rows = (int) sqrt(count($allValues));
         $cols = $rows;
 
-        $matrixData = array();
+        $matrixData = [];
         $allValuesIndex = 0;
 
         for ($currentRow = 0; $currentRow < $rows; $currentRow++) {

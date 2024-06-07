@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\Numerics;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\Numerics;
 
 class IdentityMatrix extends DiagonalMatrix
 {

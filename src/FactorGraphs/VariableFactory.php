@@ -1,4 +1,8 @@
-<?php namespace Moserware\Skills\FactorGraphs;
+<?php
+
+declare(strict_types=1);
+
+namespace Laragod\Skills\FactorGraphs;
 
 class VariableFactory
 {
@@ -10,17 +14,19 @@ class VariableFactory
         $this->_variablePriorInitializer = $variablePriorInitializer;
     }
 
-    public function createBasicVariable($name)
+    public function createBasicVariable($name): Variable
     {
         $initializer = $this->_variablePriorInitializer;
         $newVar = new Variable($name, $initializer());
+
         return $newVar;
     }
 
-    public function createKeyedVariable($key, $name)
+    public function createKeyedVariable($key, $name): KeyedVariable
     {
         $initializer = $this->_variablePriorInitializer;
         $newVar = new KeyedVariable($key, $name, $initializer());
+
         return $newVar;
     }
 }

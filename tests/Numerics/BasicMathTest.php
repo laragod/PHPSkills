@@ -1,7 +1,11 @@
-<?php namespace Moserware\Skills\Tests\Numerics;
+<?php
 
-use Moserware\Skills\Numerics\BasicMath;
-use Moserware\Skills\Tests\TestCase;
+declare(strict_types=1);
+
+namespace Laragod\Skills\Tests\Numerics;
+
+use Laragod\Skills\Numerics\BasicMath;
+use Laragod\Skills\Tests\TestCase;
 
 class BasicMathTest extends TestCase
 {
