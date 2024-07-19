@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-class RatingContainer
+class RatingContainer implements \Countable
 {
     private \Laragod\Skills\HashMap $_playerToRating;
 
