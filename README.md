@@ -1,5 +1,10 @@
 # PHP Port of Moserware.Skills
 
+[![Latest Version](https://img.shields.io/packagist/v/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills)
+[![Total Downloads](https://img.shields.io/packagist/dt/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills/stats)
+[![Monthly Downloads](https://img.shields.io/packagist/dm/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills/stats)
+[![License](https://img.shields.io/packagist/l/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills)
+
 This repository is a PHP port of the Moserware.Skills project, originally developed to compute player skills in various competitive games. For more details on the algorithm, please refer to the original [Moserware article](http://www.moserware.com/2010/03/computing-your-skill.html).
 
 The project is a fork of an existing old, unsupported library. Please note that this version is not confirmed to be fully functional and may contain issues.
