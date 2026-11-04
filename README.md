@@ -4,7 +4,7 @@
 [![Total Downloads](https://img.shields.io/packagist/dt/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills/stats)
 [![Monthly Downloads](https://img.shields.io/packagist/dm/laragod/phpskills)](https://packagist.org/packages/laragod/phpskills/stats)
 [![CI](https://github.com/laragod/PHPSkills/actions/workflows/ci.yml/badge.svg)](https://github.com/laragod/PHPSkills/actions/workflows/ci.yml)
-[![Coverage](https://codecov.io/gh/laragod/PHPSkills/graph/badge.svg)](https://codecov.io/gh/laragod/PHPSkills)
+[![Coverage](https://img.shields.io/badge/coverage-97%25-brightgreen)](https://github.com/laragod/PHPSkills/actions/workflows/ci.yml)
 [![PHPStan](https://img.shields.io/badge/PHPStan-level%209%20%2B%20strict-brightgreen)](phpstan.neon)
 [![PHP Version](https://img.shields.io/packagist/dependency-v/laragod/phpskills/php?label=php)](composer.json)
 [![License](https://img.shields.io/packagist/l/laragod/phpskills)](LICENSE)
