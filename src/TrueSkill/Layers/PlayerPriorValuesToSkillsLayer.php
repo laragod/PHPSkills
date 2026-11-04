@@ -4,75 +4,100 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\TrueSkill\Layers;
 
+use Laragod\Skills\FactorGraphs\KeyedVariable;
+use Laragod\Skills\FactorGraphs\ScheduleSequence;
 use Laragod\Skills\FactorGraphs\ScheduleStep;
 use Laragod\Skills\FactorGraphs\Variable;
 use Laragod\Skills\Numerics\BasicMath;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\Player;
 use Laragod\Skills\Rating;
+use Laragod\Skills\Team;
 use Laragod\Skills\TrueSkill\Factors\GaussianPriorFactor;
 use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 
-// We intentionally have no Posterior schedule since the only purpose here is to
-// start the process.
-class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
+/**
+ * Turns every player's prior rating into a skill variable.
+ *
+ * There is intentionally no posterior schedule since the only purpose here is to start the process.
+ *
+ * @extends TrueSkillFactorGraphLayer<Variable<GaussianDistribution>, KeyedVariable<Player, GaussianDistribution>>
+ */
+final class PlayerPriorValuesToSkillsLayer extends TrueSkillFactorGraphLayer
 {
-    private array $_teams;
-
-    public function __construct(TrueSkillFactorGraph $parentGraph, array $teams)
-    {
+    /**
+     * @param  list<Team>  $teams
+     */
+    public function __construct(
+        TrueSkillFactorGraph $parentGraph,
+        private readonly array $teams,
+    ) {
         parent::__construct($parentGraph);
-        $this->_teams = $teams;
     }
 
     public function buildLayer(): void
     {
-        $teams = $this->_teams;
-        foreach ($teams as $currentTeam) {
-            $localCurrentTeam = $currentTeam;
+        foreach ($this->teams as $team) {
             $currentTeamSkills = [];
 
-            $currentTeamAllPlayers = $localCurrentTeam->getAllPlayers();
-            foreach ($currentTeamAllPlayers as $currentTeamPlayer) {
-                $localCurrentTeamPlayer = $currentTeamPlayer;
-                $currentTeamPlayerRating = $currentTeam->getRating($localCurrentTeamPlayer);
-                $playerSkill = $this->createSkillOutputVariable($localCurrentTeamPlayer);
-                $priorFactor = $this->createPriorFactor($currentTeamPlayerRating, $playerSkill);
-                $this->addLayerFactor($priorFactor);
+            foreach ($team as $player => $rating) {
+                $playerSkill = $this->createSkillOutputVariable($player);
+                $this->addLayerFactor($this->createPriorFactor($rating, $playerSkill));
                 $currentTeamSkills[] = $playerSkill;
             }
 
-            $outputVariablesGroups = &$this->getOutputVariablesGroups();
-            $outputVariablesGroups[] = $currentTeamSkills;
+            $this->addOutputVariablesGroup($currentTeamSkills);
         }
     }
 
-    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
+    public function createPriorSchedule(): ScheduleSequence
     {
-        $localFactors = $this->getLocalFactors();
-
         return $this->scheduleSequence(
             array_map(
-                function ($prior) {
-                    return new ScheduleStep('Prior to Skill Step', $prior, 0);
-                },
-                $localFactors),
-            'All priors');
+                static fn (GaussianPriorFactor $prior): ScheduleStep => new ScheduleStep('Prior to Skill Step', $prior, 0),
+                $this->getPriorFactors()
+            ),
+            'All priors'
+        );
     }
 
+    /**
+     * @return list<GaussianPriorFactor>
+     */
+    private function getPriorFactors(): array
+    {
+        $priors = [];
+
+        foreach ($this->getLocalFactors() as $factor) {
+            if ($factor instanceof GaussianPriorFactor) {
+                $priors[] = $factor;
+            }
+        }
+
+        return $priors;
+    }
+
+    /**
+     * @param  Variable<GaussianDistribution>  $skillsVariable
+     */
     private function createPriorFactor(Rating $priorRating, Variable $skillsVariable): GaussianPriorFactor
     {
         return new GaussianPriorFactor(
             $priorRating->getMean(),
-            BasicMath::square($priorRating->getStandardDeviation()) +
-            BasicMath::square($this->getParentFactorGraph()->getGameInfo()->getDynamicsFactor()),
+            BasicMath::square($priorRating->getStandardDeviation())
+                + BasicMath::square($this->getParentFactorGraph()->getGameInfo()->getDynamicsFactor()),
             $skillsVariable
         );
     }
 
-    private function createSkillOutputVariable($key)
+    /**
+     * @return KeyedVariable<Player, GaussianDistribution>
+     */
+    private function createSkillOutputVariable(Player $player): KeyedVariable
     {
-        $parentFactorGraph = $this->getParentFactorGraph();
-        $variableFactory = $parentFactorGraph->getVariableFactory();
-
-        return $variableFactory->createKeyedVariable($key, $key."'s skill");
+        return $this->getParentFactorGraph()->getVariableFactory()->createKeyedVariable($player, sprintf("%s's skill", $player));
     }
 }

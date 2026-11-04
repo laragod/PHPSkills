@@ -6,22 +6,20 @@ namespace Laragod\Skills\Numerics;
 
 class DiagonalMatrix extends Matrix
 {
+    /**
+     * @param  list<float>  $diagonalValues
+     */
     public function __construct(array $diagonalValues)
     {
-        $diagonalCount = count($diagonalValues);
-        $rowCount = $diagonalCount;
-        $colCount = $rowCount;
+        $size = count($diagonalValues);
+        $matrixData = [];
 
-        parent::__construct($rowCount, $colCount);
-
-        for ($currentRow = 0; $currentRow < $rowCount; $currentRow++) {
-            for ($currentCol = 0; $currentCol < $colCount; $currentCol++) {
-                if ($currentRow === $currentCol) {
-                    $this->setValue($currentRow, $currentCol, $diagonalValues[$currentRow]);
-                } else {
-                    $this->setValue($currentRow, $currentCol, 0);
-                }
+        for ($currentRow = 0; $currentRow < $size; $currentRow++) {
+            for ($currentCol = 0; $currentCol < $size; $currentCol++) {
+                $matrixData[$currentRow][$currentCol] = $currentRow === $currentCol ? $diagonalValues[$currentRow] : 0.0;
             }
         }
+
+        parent::__construct($size, $size, $matrixData);
     }
 }

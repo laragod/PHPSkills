@@ -4,70 +4,111 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-// edit this
+/**
+ * A layer of the factor graph: it turns groups of input variables into groups of
+ * output variables, creating the factors that connect them along the way.
+ *
+ * @template TValue
+ * @template TInputVariable of Variable<TValue>
+ * @template TOutputVariable of Variable<TValue>
+ */
 abstract class FactorGraphLayer
 {
-    private $_localFactors = [];
+    /** @var list<Factor<TValue>> */
+    private array $localFactors = [];
 
-    private $_outputVariablesGroups = [];
+    /** @var list<list<TInputVariable>> */
+    private array $inputVariablesGroups = [];
 
-    private $_inputVariablesGroups = [];
+    /** @var list<list<TOutputVariable>> */
+    private array $outputVariablesGroups = [];
 
-    private \Laragod\Skills\FactorGraphs\FactorGraph $_parentFactorGraph;
+    /**
+     * @param  FactorGraph<TValue>  $parentFactorGraph
+     */
+    protected function __construct(
+        private readonly FactorGraph $parentFactorGraph,
+    ) {}
 
-    protected function __construct(FactorGraph $parentGraph)
-    {
-        $this->_parentFactorGraph = $parentGraph;
-    }
-
-    protected function getInputVariablesGroups(): array
-    {
-        return $this->_inputVariablesGroups;
-    }
-
-    // HACK
-
+    /**
+     * @return FactorGraph<TValue>
+     */
     public function getParentFactorGraph(): FactorGraph
     {
-        return $this->_parentFactorGraph;
+        return $this->parentFactorGraph;
     }
 
     /**
-     * This reference is still needed
+     * @return list<list<TInputVariable>>
      */
-    public function &getOutputVariablesGroups(): array
+    protected function getInputVariablesGroups(): array
     {
-        return $this->_outputVariablesGroups;
+        return $this->inputVariablesGroups;
     }
 
+    /**
+     * @param  list<list<TInputVariable>>  $inputVariablesGroups
+     */
+    public function setInputVariablesGroups(array $inputVariablesGroups): void
+    {
+        $this->inputVariablesGroups = $inputVariablesGroups;
+    }
+
+    /**
+     * @return list<list<TOutputVariable>>
+     */
+    public function getOutputVariablesGroups(): array
+    {
+        return $this->outputVariablesGroups;
+    }
+
+    /**
+     * @param  list<TOutputVariable>  $group
+     */
+    protected function addOutputVariablesGroup(array $group): void
+    {
+        $this->outputVariablesGroups[] = $group;
+    }
+
+    /**
+     * @return list<Factor<TValue>>
+     */
     public function getLocalFactors(): array
     {
-        return $this->_localFactors;
+        return $this->localFactors;
     }
 
-    public function setInputVariablesGroups($value): void
+    /**
+     * @param  Factor<TValue>  $factor
+     */
+    protected function addLayerFactor(Factor $factor): void
     {
-        $this->_inputVariablesGroups = $value;
+        $this->localFactors[] = $factor;
     }
 
-    protected function scheduleSequence(array $itemsToSequence, $name): ScheduleSequence
+    /**
+     * @param  list<Schedule<TValue>>  $itemsToSequence
+     * @return ScheduleSequence<TValue>
+     */
+    protected function scheduleSequence(array $itemsToSequence, string $name): ScheduleSequence
     {
         return new ScheduleSequence($name, $itemsToSequence);
     }
 
-    protected function addLayerFactor(Factor $factor) : void
-    {
-        $this->_localFactors[] = $factor;
-    }
+    abstract public function buildLayer(): void;
 
-    abstract public function buildLayer();
-
-    public function createPriorSchedule() : ?ScheduleSequence
+    /**
+     * @return Schedule<TValue>|null
+     */
+    public function createPriorSchedule(): ?Schedule
     {
         return null;
     }
 
-    public function createPosteriorSchedule() : ?ScheduleSequence
+    /**
+     * @return Schedule<TValue>|null
+     */
+    public function createPosteriorSchedule(): ?Schedule
     {
         return null;
     }

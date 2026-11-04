@@ -1,15 +1,15 @@
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+
 parameters:
-
+    level: 9
     paths:
-        - src/
-
-    # Level 9 is the highest level
-    level: 5
-
-#    ignoreErrors:
-#        - '#PHPDoc tag @var#'
-#
-#    excludePaths:
-#        - ./*/*/FileToBeExcluded.php
-#
-#    checkMissingIterableValueType: false
+        - src
+        - tests
+    tmpDir: .phpstan.cache
+    ignoreErrors:
+        # PHPUnit's own convention is $this->assertSame(); keep the strict rule for src only.
+        -
+            identifier: staticMethod.dynamicCall
+            paths:
+                - tests/*

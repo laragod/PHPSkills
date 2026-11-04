@@ -9,17 +9,18 @@ use Laragod\Skills\FactorGraphs\Message;
 use Laragod\Skills\FactorGraphs\Variable;
 use Laragod\Skills\Numerics\GaussianDistribution;
 
+/**
+ * @extends Factor<GaussianDistribution>
+ */
 abstract class GaussianFactor extends Factor
 {
-    protected function __construct($name)
-    {
-        parent::__construct($name);
-    }
-
     /**
-     * Sends the factor-graph message with and returns the log-normalization constant.
+     * Sends the factor-graph message and returns the log-normalization constant.
+     *
+     * @param  Message<GaussianDistribution>  $message
+     * @param  Variable<GaussianDistribution>  $variable
      */
-    protected function sendMessageVariable(Message $message, Variable $variable) : float|int
+    protected function sendMessageVariable(Message $message, Variable $variable): float
     {
         $marginal = $variable->getValue();
         $messageValue = $message->getValue();
@@ -29,13 +30,18 @@ abstract class GaussianFactor extends Factor
         return $logZ;
     }
 
+    /**
+     * @param  Variable<GaussianDistribution>  $variable
+     * @return Message<GaussianDistribution>
+     */
     public function createVariableToMessageBinding(Variable $variable): Message
     {
-        $newDistribution = GaussianDistribution::fromPrecisionMean(0, 0);
-
-        return parent::createVariableToMessageBindingWithMessage($variable,
+        return $this->createVariableToMessageBindingWithMessage(
+            $variable,
             new Message(
-                $newDistribution,
-                sprintf('message from %s to %s', $this, $variable)));
+                GaussianDistribution::fromPrecisionMean(0.0, 0.0),
+                sprintf('message from %s to %s', $this, $variable)
+            )
+        );
     }
 }

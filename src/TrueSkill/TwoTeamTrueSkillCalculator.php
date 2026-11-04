@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Laragod\Skills\TrueSkill;
 
 use Laragod\Skills\GameInfo;
-use Laragod\Skills\Guard;
 use Laragod\Skills\Numerics\BasicMath;
 use Laragod\Skills\PairwiseComparison;
 use Laragod\Skills\PlayersRange;
@@ -18,11 +17,11 @@ use Laragod\Skills\Team;
 use Laragod\Skills\TeamsRange;
 
 /**
- * Calculates new ratings for only two teams where each team has 1 or more players.
+ * Calculates new ratings for exactly two teams where each team has one or more players.
  *
  * When you only have two teams, the math is still simple: no factor graphs are used yet.
  */
-class TwoTeamTrueSkillCalculator extends SkillCalculator
+final class TwoTeamTrueSkillCalculator extends SkillCalculator
 {
     public function __construct()
     {
@@ -31,133 +30,97 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
 
     public function calculateNewRatings(GameInfo $gameInfo, array $teams, array $teamRanks): RatingContainer
     {
-        Guard::argumentNotNull($gameInfo, 'gameInfo');
         $this->validateTeamCountAndPlayersCountPerTeam($teams);
+        $this->validateTeamRanks($teams, $teamRanks);
 
         RankSorter::sort($teams, $teamRanks);
 
         $team1 = $teams[0];
         $team2 = $teams[1];
 
-        $wasDraw = ($teamRanks[0] == $teamRanks[1]);
+        $wasDraw = $teamRanks[0] === $teamRanks[1];
 
-        $results = new RatingContainer();
+        $results = new RatingContainer;
 
         $this->updatePlayerRatings($gameInfo, $results, $team1, $team2, $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::WIN);
-
         $this->updatePlayerRatings($gameInfo, $results, $team2, $team1, $wasDraw ? PairwiseComparison::DRAW : PairwiseComparison::LOSE);
 
         return $results;
     }
 
-    private function updatePlayerRatings(GameInfo $gameInfo,
+    private function updatePlayerRatings(
+        GameInfo $gameInfo,
         RatingContainer $newPlayerRatings,
         Team $selfTeam,
         Team $otherTeam,
-        $selfToOtherTeamComparison): void
-    {
-        $drawMargin = DrawMargin::getDrawMarginFromDrawProbability(
-            $gameInfo->getDrawProbability(),
-            $gameInfo->getBeta()
-        );
+        PairwiseComparison $selfToOtherTeamComparison,
+    ): void {
+        $drawMargin = DrawMargin::getDrawMarginFromDrawProbability($gameInfo->getDrawProbability(), $gameInfo->getBeta());
 
         $betaSquared = BasicMath::square($gameInfo->getBeta());
         $tauSquared = BasicMath::square($gameInfo->getDynamicsFactor());
 
         $totalPlayers = $selfTeam->count() + $otherTeam->count();
 
-        $meanGetter = function ($currentRating) {
-            return $currentRating->getMean();
-        };
+        $meanGetter = static fn (Rating $rating): float => $rating->getMean();
+        $varianceGetter = static fn (Rating $rating): float => BasicMath::square($rating->getStandardDeviation());
 
         $selfMeanSum = BasicMath::sum($selfTeam->getAllRatings(), $meanGetter);
         $otherTeamMeanSum = BasicMath::sum($otherTeam->getAllRatings(), $meanGetter);
 
-        $varianceGetter = function ($currentRating) {
-            return BasicMath::square($currentRating->getStandardDeviation());
-        };
-
         $c = sqrt(
             BasicMath::sum($selfTeam->getAllRatings(), $varianceGetter)
-            +
-            BasicMath::sum($otherTeam->getAllRatings(), $varianceGetter)
-            +
-            $totalPlayers * $betaSquared
+            + BasicMath::sum($otherTeam->getAllRatings(), $varianceGetter)
+            + $totalPlayers * $betaSquared
         );
 
         $winningMean = $selfMeanSum;
         $losingMean = $otherTeamMeanSum;
 
-        switch ($selfToOtherTeamComparison) {
-            case PairwiseComparison::WIN:
-            case PairwiseComparison::DRAW:
-                // NOP
-                break;
-            case PairwiseComparison::LOSE:
-                $winningMean = $otherTeamMeanSum;
-                $losingMean = $selfMeanSum;
-                break;
+        if ($selfToOtherTeamComparison === PairwiseComparison::LOSE) {
+            $winningMean = $otherTeamMeanSum;
+            $losingMean = $selfMeanSum;
         }
 
         $meanDelta = $winningMean - $losingMean;
 
-        if ($selfToOtherTeamComparison != PairwiseComparison::DRAW) {
-            // non-draw case
-            $v = TruncatedGaussianCorrectionFunctions::vExceedsMarginScaled($meanDelta, $drawMargin, $c);
-            $w = TruncatedGaussianCorrectionFunctions::wExceedsMarginScaled($meanDelta, $drawMargin, $c);
-            $rankMultiplier = (int) $selfToOtherTeamComparison;
-        } else {
-            // assume draw
+        if ($selfToOtherTeamComparison === PairwiseComparison::DRAW) {
             $v = TruncatedGaussianCorrectionFunctions::vWithinMarginScaled($meanDelta, $drawMargin, $c);
             $w = TruncatedGaussianCorrectionFunctions::wWithinMarginScaled($meanDelta, $drawMargin, $c);
             $rankMultiplier = 1;
+        } else {
+            $v = TruncatedGaussianCorrectionFunctions::vExceedsMarginScaled($meanDelta, $drawMargin, $c);
+            $w = TruncatedGaussianCorrectionFunctions::wExceedsMarginScaled($meanDelta, $drawMargin, $c);
+            $rankMultiplier = $selfToOtherTeamComparison->value;
         }
 
-        $selfTeamAllPlayers = $selfTeam->getAllPlayers();
-        foreach ($selfTeamAllPlayers as $selfTeamCurrentPlayer) {
-            $localSelfTeamCurrentPlayer = $selfTeamCurrentPlayer;
-            $previousPlayerRating = $selfTeam->getRating($localSelfTeamCurrentPlayer);
+        foreach ($selfTeam as $player => $previousPlayerRating) {
+            $varianceWithDynamics = BasicMath::square($previousPlayerRating->getStandardDeviation()) + $tauSquared;
 
-            $meanMultiplier = (BasicMath::square($previousPlayerRating->getStandardDeviation()) + $tauSquared) / $c;
-            $stdDevMultiplier = (BasicMath::square($previousPlayerRating->getStandardDeviation()) + $tauSquared) / BasicMath::square($c);
+            $meanMultiplier = $varianceWithDynamics / $c;
+            $stdDevMultiplier = $varianceWithDynamics / BasicMath::square($c);
 
-            $playerMeanDelta = ($rankMultiplier * $meanMultiplier * $v);
-            $newMean = $previousPlayerRating->getMean() + $playerMeanDelta;
+            $newMean = $previousPlayerRating->getMean() + ($rankMultiplier * $meanMultiplier * $v);
+            $newStdDev = sqrt($varianceWithDynamics * (1 - $w * $stdDevMultiplier));
 
-            $newStdDev = sqrt(
-                (BasicMath::square($previousPlayerRating->getStandardDeviation()) + $tauSquared) * (1 - $w * $stdDevMultiplier)
-            );
-
-            $newPlayerRatings->setRating($localSelfTeamCurrentPlayer, new Rating($newMean, $newStdDev));
+            $newPlayerRatings->setRating($player, new Rating($newMean, $newStdDev));
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function calculateMatchQuality(GameInfo $gameInfo, array $teams): float
     {
-        Guard::argumentNotNull($gameInfo, 'gameInfo');
         $this->validateTeamCountAndPlayersCountPerTeam($teams);
 
         // We've verified that there's just two teams
         $team1Ratings = $teams[0]->getAllRatings();
-        $team1Count = count($team1Ratings);
-
         $team2Ratings = $teams[1]->getAllRatings();
-        $team2Count = count($team2Ratings);
 
-        $totalPlayers = $team1Count + $team2Count;
+        $totalPlayers = count($team1Ratings) + count($team2Ratings);
 
         $betaSquared = BasicMath::square($gameInfo->getBeta());
 
-        $meanGetter = function ($currentRating) {
-            return $currentRating->getMean();
-        };
-
-        $varianceGetter = function ($currentRating) {
-            return BasicMath::square($currentRating->getStandardDeviation());
-        };
+        $meanGetter = static fn (Rating $rating): float => $rating->getMean();
+        $varianceGetter = static fn (Rating $rating): float => BasicMath::square($rating->getStandardDeviation());
 
         $team1MeanSum = BasicMath::sum($team1Ratings, $meanGetter);
         $team1StdDevSquared = BasicMath::sum($team1Ratings, $varianceGetter);
@@ -168,17 +131,14 @@ class TwoTeamTrueSkillCalculator extends SkillCalculator
         // This comes from equation 4.1 in the TrueSkill paper on page 8
         // The equation was broken up into the part under the square root sign and
         // the exponential part to make the code easier to read.
-
         $sqrtPart = sqrt(
             ($totalPlayers * $betaSquared)
-            /
-            ($totalPlayers * $betaSquared + $team1StdDevSquared + $team2StdDevSquared)
+            / ($totalPlayers * $betaSquared + $team1StdDevSquared + $team2StdDevSquared)
         );
 
         $expPart = exp(
             (-1 * BasicMath::square($team1MeanSum - $team2MeanSum))
-            /
-            (2 * ($totalPlayers * $betaSquared + $team1StdDevSquared + $team2StdDevSquared))
+            / (2 * ($totalPlayers * $betaSquared + $team1StdDevSquared + $team2StdDevSquared))
         );
 
         return $expPart * $sqrtPart;

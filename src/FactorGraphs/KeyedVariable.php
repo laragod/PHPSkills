@@ -4,18 +4,33 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class KeyedVariable extends Variable
+/**
+ * A variable that remembers the key (for example the player) it was created for.
+ *
+ * @template TKey
+ * @template TValue
+ *
+ * @extends Variable<TValue>
+ */
+final class KeyedVariable extends Variable
 {
-    private $_key;
-
-    public function __construct($key, $name, $prior)
-    {
+    /**
+     * @param  TKey  $key
+     * @param  TValue  $prior
+     */
+    public function __construct(
+        private readonly mixed $key,
+        string $name,
+        mixed $prior,
+    ) {
         parent::__construct($name, $prior);
-        $this->_key = $key;
     }
 
-    public function getKey()
+    /**
+     * @return TKey
+     */
+    public function getKey(): mixed
     {
-        return $this->_key;
+        return $this->key;
     }
 }

@@ -4,24 +4,23 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-class PartialPlay
+/**
+ * @internal
+ */
+final class PartialPlay
 {
-    public static function getPartialPlayPercentage($player)
+    /**
+     * The smallest percentage that is used, to work around numeric issues near 0.
+     */
+    private const SMALLEST_PERCENTAGE = 0.0001;
+
+    public static function getPartialPlayPercentage(object $player): float
     {
-        // If the player doesn't support the interface, assume 1.0 == 100%
-        $supportsPartialPlay = $player instanceof ISupportPartialPlay;
-        if (! $supportsPartialPlay) {
+        // If the player does not support partial play, assume 1.0 == 100%
+        if (! $player instanceof ISupportPartialPlay) {
             return 1.0;
         }
 
-        $partialPlayPercentage = $player->getPartialPlayPercentage();
-
-        // HACK to get around bug near 0
-        $smallestPercentage = 0.0001;
-        if ($partialPlayPercentage < $smallestPercentage) {
-            $partialPlayPercentage = $smallestPercentage;
-        }
-
-        return $partialPlayPercentage;
+        return max($player->getPartialPlayPercentage(), self::SMALLEST_PERCENTAGE);
     }
 }

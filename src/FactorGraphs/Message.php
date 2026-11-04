@@ -4,30 +4,41 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class Message
+use Stringable;
+
+/**
+ * A message sent from a factor to a variable.
+ *
+ * @template TValue
+ */
+final class Message implements Stringable
 {
-    private $_name;
+    /**
+     * @param  TValue  $value
+     */
+    public function __construct(
+        private mixed $value,
+        private readonly string $name,
+    ) {}
 
-    private $_value;
-
-    public function __construct($value = null, $name = null)
+    /**
+     * @return TValue
+     */
+    public function getValue(): mixed
     {
-        $this->_name = $name;
-        $this->_value = $value;
+        return $this->value;
     }
 
-    public function getValue()
+    /**
+     * @param  TValue  $value
+     */
+    public function setValue(mixed $value): void
     {
-        return $this->_value;
+        $this->value = $value;
     }
 
-    public function setValue($value): void
+    public function __toString(): string
     {
-        $this->_value = $value;
-    }
-
-    public function __toString()
-    {
-        return (string) $this->_name;
+        return $this->name;
     }
 }

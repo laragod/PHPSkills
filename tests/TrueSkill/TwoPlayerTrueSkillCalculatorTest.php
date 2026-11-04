@@ -9,9 +9,9 @@ use Laragod\Skills\TrueSkill\TwoPlayerTrueSkillCalculator;
 
 class TwoPlayerTrueSkillCalculatorTest extends TestCase
 {
-    public function testTwoPlayerTrueSkillCalculator(): void
+    public function test_two_player_true_skill_calculator(): void
     {
-        $calculator = new TwoPlayerTrueSkillCalculator();
+        $calculator = new TwoPlayerTrueSkillCalculator;
 
         // We only support two players
         TrueSkillCalculatorTests::testAllTwoPlayerScenarios($this, $calculator);

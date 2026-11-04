@@ -4,33 +4,28 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-use Exception;
+use InvalidArgumentException;
 
 /**
  * Verifies argument contracts.
  *
  * @see http://www.moserware.com/2008/01/borrowing-ideas-from-3-interesting.html
+ *
+ * @internal
  */
-class Guard
+final class Guard
 {
-    public static function argumentNotNull($value, $parameterName): void
+    public static function argumentIsValidIndex(int $index, int $count, string $parameterName): void
     {
-        if ($value == null) {
-            throw new Exception($parameterName.' can not be null');
+        if ($index < 0 || $index >= $count) {
+            throw new InvalidArgumentException(sprintf('%s is an invalid index (%d given, %d available)', $parameterName, $index, $count));
         }
     }
 
-    public static function argumentIsValidIndex($index, $count, $parameterName): void
+    public static function argumentInRangeInclusive(float $value, float $min, float $max, string $parameterName): void
     {
-        if (($index < 0) || ($index >= $count)) {
-            throw new Exception($parameterName.' is an invalid index');
-        }
-    }
-
-    public static function argumentInRangeInclusive($value, $min, $max, $parameterName): void
-    {
-        if (($value < $min) || ($value > $max)) {
-            throw new Exception($parameterName.' is not in the valid range ['.$min.', '.$max.']');
+        if ($value < $min || $value > $max) {
+            throw new InvalidArgumentException(sprintf('%s is not in the valid range [%s, %s]', $parameterName, $min, $max));
         }
     }
 }

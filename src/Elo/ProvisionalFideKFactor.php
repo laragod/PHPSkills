@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Laragod\Skills\Elo;
 
 /**
- * Indicates someone who has played less than 30 games.
+ * The FIDE K-factor for provisional players (fewer than 30 games).
  */
-class ProvisionalFideKFactor extends FideKFactor
+final class ProvisionalFideKFactor extends FideKFactor
 {
-    public function getValueForRating($rating): int
+    public function getValueForRating(float $rating): float
     {
-        return 25;
+        return 25.0;
     }
 }

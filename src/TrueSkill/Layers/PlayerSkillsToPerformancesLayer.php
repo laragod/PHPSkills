@@ -4,40 +4,69 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\TrueSkill\Layers;
 
+use Laragod\Skills\FactorGraphs\Factor;
 use Laragod\Skills\FactorGraphs\KeyedVariable;
+use Laragod\Skills\FactorGraphs\ScheduleSequence;
 use Laragod\Skills\FactorGraphs\ScheduleStep;
 use Laragod\Skills\Numerics\BasicMath;
+use Laragod\Skills\Numerics\GaussianDistribution;
+use Laragod\Skills\Player;
 use Laragod\Skills\TrueSkill\Factors\GaussianLikelihoodFactor;
-use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 
-class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
+/**
+ * Connects every player's skill to a performance variable, adding the game's beta as uncertainty.
+ *
+ * @extends TrueSkillFactorGraphLayer<KeyedVariable<Player, GaussianDistribution>, KeyedVariable<Player, GaussianDistribution>>
+ */
+final class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
 {
-    public function __construct(TrueSkillFactorGraph $parentGraph)
-    {
-        parent::__construct($parentGraph);
-    }
-
     public function buildLayer(): void
     {
-        $inputVariablesGroups = $this->getInputVariablesGroups();
-        $outputVariablesGroups = &$this->getOutputVariablesGroups();
-
-        foreach ($inputVariablesGroups as $currentTeam) {
+        foreach ($this->getInputVariablesGroups() as $currentTeam) {
             $currentTeamPlayerPerformances = [];
 
             foreach ($currentTeam as $playerSkillVariable) {
-                $localPlayerSkillVariable = $playerSkillVariable;
-                $currentPlayer = $localPlayerSkillVariable->getKey();
-                $playerPerformance = $this->createOutputVariable($currentPlayer);
-                $newLikelihoodFactor = $this->createLikelihood($localPlayerSkillVariable, $playerPerformance);
-                $this->addLayerFactor($newLikelihoodFactor);
+                $playerPerformance = $this->createOutputVariable($playerSkillVariable->getKey());
+                $this->addLayerFactor($this->createLikelihood($playerSkillVariable, $playerPerformance));
                 $currentTeamPlayerPerformances[] = $playerPerformance;
             }
 
-            $outputVariablesGroups[] = $currentTeamPlayerPerformances;
+            $this->addOutputVariablesGroup($currentTeamPlayerPerformances);
         }
     }
 
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
+    public function createPriorSchedule(): ScheduleSequence
+    {
+        return $this->scheduleSequence(
+            array_map(
+                static fn (Factor $likelihood): ScheduleStep => new ScheduleStep('Skill to Perf step', $likelihood, 0),
+                $this->getLocalFactors()
+            ),
+            'All skill to performance sending'
+        );
+    }
+
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
+    public function createPosteriorSchedule(): ScheduleSequence
+    {
+        return $this->scheduleSequence(
+            array_map(
+                static fn (Factor $likelihood): ScheduleStep => new ScheduleStep('Perf to Skill step', $likelihood, 1),
+                $this->getLocalFactors()
+            ),
+            'All performance to skill sending'
+        );
+    }
+
+    /**
+     * @param  KeyedVariable<Player, GaussianDistribution>  $playerSkill
+     * @param  KeyedVariable<Player, GaussianDistribution>  $playerPerformance
+     */
     private function createLikelihood(KeyedVariable $playerSkill, KeyedVariable $playerPerformance): GaussianLikelihoodFactor
     {
         return new GaussianLikelihoodFactor(
@@ -47,34 +76,11 @@ class PlayerSkillsToPerformancesLayer extends TrueSkillFactorGraphLayer
         );
     }
 
-    private function createOutputVariable($key)
+    /**
+     * @return KeyedVariable<Player, GaussianDistribution>
+     */
+    private function createOutputVariable(Player $player): KeyedVariable
     {
-        return $this->getParentFactorGraph()->getVariableFactory()->createKeyedVariable($key, $key."'s performance");
-    }
-
-    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
-    {
-        $localFactors = $this->getLocalFactors();
-
-        return $this->scheduleSequence(
-            array_map(
-                function ($likelihood) {
-                    return new ScheduleStep('Skill to Perf step', $likelihood, 0);
-                },
-                $localFactors),
-            'All skill to performance sending');
-    }
-
-    public function createPosteriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
-    {
-        $localFactors = $this->getLocalFactors();
-
-        return $this->scheduleSequence(
-            array_map(
-                function ($likelihood) {
-                    return new ScheduleStep('name', $likelihood, 1);
-                },
-                $localFactors),
-            'All skill to performance sending');
+        return $this->getParentFactorGraph()->getVariableFactory()->createKeyedVariable($player, sprintf("%s's performance", $player));
     }
 }

@@ -4,38 +4,54 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class Variable
+use Stringable;
+
+/**
+ * A variable in the factor graph that holds a marginal.
+ *
+ * @template TValue
+ */
+class Variable implements Stringable
 {
-    private string $_name;
+    private readonly string $name;
 
-    private $_prior;
+    /** @var TValue */
+    private mixed $value;
 
-    private $_value;
-
-    public function __construct($name, $prior)
-    {
-        $this->_name = 'Variable['.$name.']';
-        $this->_prior = $prior;
-        $this->resetToPrior();
+    /**
+     * @param  TValue  $prior
+     */
+    public function __construct(
+        string $name,
+        private readonly mixed $prior,
+    ) {
+        $this->name = 'Variable['.$name.']';
+        $this->value = $prior;
     }
 
-    public function getValue()
+    /**
+     * @return TValue
+     */
+    public function getValue(): mixed
     {
-        return $this->_value;
+        return $this->value;
     }
 
-    public function setValue($value): void
+    /**
+     * @param  TValue  $value
+     */
+    public function setValue(mixed $value): void
     {
-        $this->_value = $value;
+        $this->value = $value;
     }
 
     public function resetToPrior(): void
     {
-        $this->_value = $this->_prior;
+        $this->value = $this->prior;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->_name;
+        return $this->name;
     }
 }

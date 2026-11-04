@@ -6,9 +6,15 @@ namespace Laragod\Skills\TrueSkill;
 
 use Laragod\Skills\Numerics\GaussianDistribution;
 
-class TruncatedGaussianCorrectionFunctions
+/**
+ * The V and W functions from the bottom of page 4 of the TrueSkill paper.
+ */
+final class TruncatedGaussianCorrectionFunctions
 {
-    // These functions from the bottom of page 4 of the TrueSkill paper.
+    /**
+     * Below this value the denominators are treated as zero to avoid numeric blow-ups.
+     */
+    private const SMALLEST_DENOMINATOR = 2.222758749e-162;
 
     /**
      * The "V" function where the team performance difference is greater than the draw margin.
@@ -16,19 +22,18 @@ class TruncatedGaussianCorrectionFunctions
      * In the reference F# implementation, this is referred to as "the additive
      * correction of a single-sided truncated Gaussian with unit variance."
      *
-     * @param  number  $drawMargin  In the paper, it's referred to as just "ε".
-     * @return float
+     * @param  float  $drawMargin  In the paper this is referred to as epsilon.
      */
-    public static function vExceedsMarginScaled($teamPerformanceDifference, $drawMargin, $c) : float|int
+    public static function vExceedsMarginScaled(float $teamPerformanceDifference, float $drawMargin, float $c): float
     {
         return self::vExceedsMargin($teamPerformanceDifference / $c, $drawMargin / $c);
     }
 
-    public static function vExceedsMargin($teamPerformanceDifference, $drawMargin) : float|int
+    public static function vExceedsMargin(float $teamPerformanceDifference, float $drawMargin): float
     {
         $denominator = GaussianDistribution::cumulativeTo($teamPerformanceDifference - $drawMargin);
 
-        if ($denominator < 2.222758749e-162) {
+        if ($denominator < self::SMALLEST_DENOMINATOR) {
             return -$teamPerformanceDifference + $drawMargin;
         }
 
@@ -40,24 +45,18 @@ class TruncatedGaussianCorrectionFunctions
      *
      * In the reference F# implementation, this is referred to as "the multiplicative
      * correction of a single-sided truncated Gaussian with unit variance."
-     *
-     * @return float
      */
-    public static function wExceedsMarginScaled($teamPerformanceDifference, $drawMargin, $c) : float|int
+    public static function wExceedsMarginScaled(float $teamPerformanceDifference, float $drawMargin, float $c): float
     {
         return self::wExceedsMargin($teamPerformanceDifference / $c, $drawMargin / $c);
     }
 
-    public static function wExceedsMargin($teamPerformanceDifference, $drawMargin) : float|int
+    public static function wExceedsMargin(float $teamPerformanceDifference, float $drawMargin): float
     {
         $denominator = GaussianDistribution::cumulativeTo($teamPerformanceDifference - $drawMargin);
 
-        if ($denominator < 2.222758749e-162) {
-            if ($teamPerformanceDifference < 0.0) {
-                return 1.0;
-            }
-
-            return 0.0;
+        if ($denominator < self::SMALLEST_DENOMINATOR) {
+            return $teamPerformanceDifference < 0.0 ? 1.0 : 0.0;
         }
 
         $vWin = self::vExceedsMargin($teamPerformanceDifference, $drawMargin);
@@ -65,21 +64,22 @@ class TruncatedGaussianCorrectionFunctions
         return $vWin * ($vWin + $teamPerformanceDifference - $drawMargin);
     }
 
-    // the additive correction of a double-sided truncated Gaussian with unit variance
-    public static function vWithinMarginScaled($teamPerformanceDifference, $drawMargin, $c) : float|int
+    /**
+     * The additive correction of a double-sided truncated Gaussian with unit variance.
+     */
+    public static function vWithinMarginScaled(float $teamPerformanceDifference, float $drawMargin, float $c): float
     {
         return self::vWithinMargin($teamPerformanceDifference / $c, $drawMargin / $c);
     }
 
-    // from F#:
-    public static function vWithinMargin($teamPerformanceDifference, $drawMargin) : float|int
+    public static function vWithinMargin(float $teamPerformanceDifference, float $drawMargin): float
     {
         $teamPerformanceDifferenceAbsoluteValue = abs($teamPerformanceDifference);
         $denominator =
             GaussianDistribution::cumulativeTo($drawMargin - $teamPerformanceDifferenceAbsoluteValue) -
             GaussianDistribution::cumulativeTo(-$drawMargin - $teamPerformanceDifferenceAbsoluteValue);
 
-        if ($denominator < 2.222758749e-162) {
+        if ($denominator < self::SMALLEST_DENOMINATOR) {
             if ($teamPerformanceDifference < 0.0) {
                 return -$teamPerformanceDifference - $drawMargin;
             }
@@ -97,34 +97,33 @@ class TruncatedGaussianCorrectionFunctions
         return $numerator / $denominator;
     }
 
-    // the multiplicative correction of a double-sided truncated Gaussian with unit variance
-    public static function wWithinMarginScaled($teamPerformanceDifference, $drawMargin, $c) : float|int
+    /**
+     * The multiplicative correction of a double-sided truncated Gaussian with unit variance.
+     */
+    public static function wWithinMarginScaled(float $teamPerformanceDifference, float $drawMargin, float $c): float
     {
         return self::wWithinMargin($teamPerformanceDifference / $c, $drawMargin / $c);
     }
 
-    // From F#:
-    public static function wWithinMargin($teamPerformanceDifference, $drawMargin) : float|int
+    public static function wWithinMargin(float $teamPerformanceDifference, float $drawMargin): float
     {
         $teamPerformanceDifferenceAbsoluteValue = abs($teamPerformanceDifference);
-        $denominator = GaussianDistribution::cumulativeTo($drawMargin - $teamPerformanceDifferenceAbsoluteValue)
-            -
+        $denominator =
+            GaussianDistribution::cumulativeTo($drawMargin - $teamPerformanceDifferenceAbsoluteValue) -
             GaussianDistribution::cumulativeTo(-$drawMargin - $teamPerformanceDifferenceAbsoluteValue);
 
-        if ($denominator < 2.222758749e-162) {
+        if ($denominator < self::SMALLEST_DENOMINATOR) {
             return 1.0;
         }
 
         $vt = self::vWithinMargin($teamPerformanceDifferenceAbsoluteValue, $drawMargin);
 
         return $vt * $vt +
-        (
-            ($drawMargin - $teamPerformanceDifferenceAbsoluteValue)
-            *
-            GaussianDistribution::at(
-                $drawMargin - $teamPerformanceDifferenceAbsoluteValue)
-            - (-$drawMargin - $teamPerformanceDifferenceAbsoluteValue)
-            *
-            GaussianDistribution::at(-$drawMargin - $teamPerformanceDifferenceAbsoluteValue)) / $denominator;
+            (
+                ($drawMargin - $teamPerformanceDifferenceAbsoluteValue)
+                * GaussianDistribution::at($drawMargin - $teamPerformanceDifferenceAbsoluteValue)
+                - (-$drawMargin - $teamPerformanceDifferenceAbsoluteValue)
+                * GaussianDistribution::at(-$drawMargin - $teamPerformanceDifferenceAbsoluteValue)
+            ) / $denominator;
     }
 }

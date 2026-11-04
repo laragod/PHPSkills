@@ -4,23 +4,28 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class ScheduleStep extends Schedule
+/**
+ * Updates a single message of a single factor.
+ *
+ * @template TValue
+ *
+ * @extends Schedule<TValue>
+ */
+final class ScheduleStep extends Schedule
 {
-    private \Laragod\Skills\FactorGraphs\Factor $_factor;
-
-    private $_index;
-
-    public function __construct($name, Factor $factor, $index)
-    {
+    /**
+     * @param  Factor<TValue>  $factor
+     */
+    public function __construct(
+        string $name,
+        private readonly Factor $factor,
+        private readonly int $index,
+    ) {
         parent::__construct($name);
-        $this->_factor = $factor;
-        $this->_index = $index;
     }
 
-    public function visit($depth = -1, $maxDepth = 0)
+    public function visit(): float
     {
-        $currentFactor = $this->_factor;
-
-        return $currentFactor->updateMessageIndex($this->_index);
+        return $this->factor->updateMessageIndex($this->index);
     }
 }

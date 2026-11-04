@@ -9,9 +9,9 @@ use Laragod\Skills\TrueSkill\FactorGraphTrueSkillCalculator;
 
 class FactorGraphTrueSkillCalculatorTest extends TestCase
 {
-    public function testFactorGraphTrueSkillCalculator(): void
+    public function test_factor_graph_true_skill_calculator(): void
     {
-        $calculator = new FactorGraphTrueSkillCalculator();
+        $calculator = new FactorGraphTrueSkillCalculator;
 
         TrueSkillCalculatorTests::testAllTwoPlayerScenarios($this, $calculator);
         TrueSkillCalculatorTests::testAllTwoTeamScenarios($this, $calculator);

@@ -2,23 +2,24 @@
 
 declare(strict_types=1);
 
+use Rector\CodeQuality\Rector\ClassMethod\LocallyCalledStaticMethodToNonStaticRector;
 use Rector\Config\RectorConfig;
-use Rector\TypeDeclaration\Rector\ClassMethod\AddVoidReturnTypeWhereNoReturnRector;
-use Rector\TypeDeclaration\Rector\Property\TypedPropertyFromStrictConstructorRector;
 
 return RectorConfig::configure()
     ->withPaths([
         __DIR__.'/src',
         __DIR__.'/tests',
     ])
-    // uncomment to reach your current PHP version
-    // ->withPhpSets()
-    ->withRules([
-        AddVoidReturnTypeWhereNoReturnRector::class,
-        TypedPropertyFromStrictConstructorRector::class,
-    ])
-    // here we can define, what prepared sets of rules will be applied
+    ->withPhpSets(php82: true)
     ->withPreparedSets(
         deadCode: true,
-        codeQuality: true
-    );
+        codeQuality: true,
+        typeDeclarations: true,
+        privatization: true,
+        earlyReturn: true,
+    )
+    ->withSkip([
+        // Pure helpers that are called from constructors stay static on purpose.
+        LocallyCalledStaticMethodToNonStaticRector::class,
+    ])
+    ->withImportNames(removeUnusedImports: true);

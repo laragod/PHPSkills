@@ -4,37 +4,78 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-class RatingContainer implements \Countable
+use Countable;
+use Generator;
+use IteratorAggregate;
+
+/**
+ * Maps players to their ratings, preserving insertion order.
+ *
+ * @implements IteratorAggregate<Player, Rating>
+ */
+class RatingContainer implements Countable, IteratorAggregate
 {
-    private \Laragod\Skills\HashMap $_playerToRating;
+    /** @var HashMap<Player, Rating> */
+    private readonly HashMap $playerToRating;
 
     public function __construct()
     {
-        $this->_playerToRating = new HashMap();
+        $this->playerToRating = new HashMap;
     }
 
-    public function getRating(Player $player)
+    public function getRating(Player $player): Rating
     {
-        return $this->_playerToRating->getValue($player);
+        return $this->playerToRating->getValue($player);
     }
 
-    public function setRating(Player $player, Rating $rating): HashMap
+    public function hasPlayer(Player $player): bool
     {
-        return $this->_playerToRating->setValue($player, $rating);
+        return $this->playerToRating->hasKey($player);
     }
 
+    /**
+     * @return $this
+     */
+    public function setRating(Player $player, Rating $rating): static
+    {
+        $this->playerToRating->setValue($player, $rating);
+
+        return $this;
+    }
+
+    /**
+     * @return list<Player>
+     */
     public function getAllPlayers(): array
     {
-        return $this->_playerToRating->getAllKeys();
+        return $this->playerToRating->getAllKeys();
     }
 
+    /**
+     * @return list<Rating>
+     */
     public function getAllRatings(): array
     {
-        return $this->_playerToRating->getAllValues();
+        return $this->playerToRating->getAllValues();
     }
 
+    /**
+     * @return int<0, max>
+     */
     public function count(): int
     {
-        return $this->_playerToRating->count();
+        return $this->playerToRating->count();
+    }
+
+    /**
+     * @return Generator<Player, Rating>
+     */
+    public function getIterator(): Generator
+    {
+        $ratings = $this->getAllRatings();
+
+        foreach ($this->getAllPlayers() as $index => $player) {
+            yield $player => $ratings[$index];
+        }
     }
 }

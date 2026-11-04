@@ -4,26 +4,32 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class ScheduleLoop extends Schedule
+/**
+ * Repeats a schedule until the marginals stop changing by more than a given delta.
+ *
+ * @template TValue
+ *
+ * @extends Schedule<TValue>
+ */
+final class ScheduleLoop extends Schedule
 {
-    private $_maxDelta;
-
-    private \Laragod\Skills\FactorGraphs\Schedule $_scheduleToLoop;
-
-    public function __construct($name, Schedule $scheduleToLoop, $maxDelta)
-    {
+    /**
+     * @param  Schedule<TValue>  $scheduleToLoop
+     */
+    public function __construct(
+        string $name,
+        private readonly Schedule $scheduleToLoop,
+        private readonly float $maxDelta,
+    ) {
         parent::__construct($name);
-        $this->_scheduleToLoop = $scheduleToLoop;
-        $this->_maxDelta = $maxDelta;
     }
 
-    public function visit($depth = -1, $maxDepth = 0)
+    public function visit(): float
     {
-        $totalIterations = 1;
-        $delta = $this->_scheduleToLoop->visit($depth + 1, $maxDepth);
-        while ($delta > $this->_maxDelta) {
-            $delta = $this->_scheduleToLoop->visit($depth + 1, $maxDepth);
-            $totalIterations++;
+        $delta = $this->scheduleToLoop->visit();
+
+        while ($delta > $this->maxDelta) {
+            $delta = $this->scheduleToLoop->visit();
         }
 
         return $delta;

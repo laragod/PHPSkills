@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\Elo;
 
+/**
+ * The K-factor controls how much a single game can change an Elo rating.
+ */
 class KFactor
 {
-    const DEFAULT_KFACTOR = 24;
+    public const DEFAULT_KFACTOR = 24.0;
 
-    private $_value;
+    public function __construct(
+        private readonly float $value = self::DEFAULT_KFACTOR,
+    ) {}
 
-    public function __construct($exactKFactor = self::DEFAULT_KFACTOR)
+    public function getValueForRating(float $rating): float
     {
-        $this->_value = $exactKFactor;
-    }
-
-    public function getValueForRating($rating)
-    {
-        return $this->_value;
+        return $this->value;
     }
 }

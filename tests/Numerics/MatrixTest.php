@@ -4,60 +4,66 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\Tests\Numerics;
 
+use InvalidArgumentException;
+use Laragod\Skills\Numerics\DiagonalMatrix;
 use Laragod\Skills\Numerics\IdentityMatrix;
 use Laragod\Skills\Numerics\Matrix;
 use Laragod\Skills\Numerics\SquareMatrix;
+use Laragod\Skills\Numerics\Vector;
 use Laragod\Skills\Tests\TestCase;
+use LogicException;
 
-class MatrixTest extends TestCase
+final class MatrixTest extends TestCase
 {
-    public function testTwoByTwoDeterminant(): void
+    private const ERROR_TOLERANCE = 0.0000001;
+
+    public function test_two_by_two_determinant(): void
     {
         $a = new SquareMatrix(1, 2,
             3, 4);
 
-        $this->assertEquals(-2, $a->getDeterminant());
+        $this->assertEqualsWithDelta(-2, $a->getDeterminant(), self::ERROR_TOLERANCE);
 
         $b = new SquareMatrix(3, 4,
             5, 6);
 
-        $this->assertEquals(-2, $b->getDeterminant());
+        $this->assertEqualsWithDelta(-2, $b->getDeterminant(), self::ERROR_TOLERANCE);
 
         $c = new SquareMatrix(1, 1,
             1, 1);
 
-        $this->assertEquals(0, $c->getDeterminant());
+        $this->assertEqualsWithDelta(0, $c->getDeterminant(), self::ERROR_TOLERANCE);
 
         $d = new SquareMatrix(12, 15,
             17, 21);
 
-        $this->assertEquals(12 * 21 - 15 * 17, $d->getDeterminant());
+        $this->assertEqualsWithDelta(12 * 21 - 15 * 17, $d->getDeterminant(), self::ERROR_TOLERANCE);
     }
 
-    public function testThreeByThreeDeterminant(): void
+    public function test_three_by_three_determinant(): void
     {
         $a = new SquareMatrix(1, 2, 3,
             4, 5, 6,
             7, 8, 9);
 
-        $this->assertEquals(0, $a->getDeterminant());
+        $this->assertEqualsWithDelta(0, $a->getDeterminant(), self::ERROR_TOLERANCE);
 
         $pi = new SquareMatrix(3, 1, 4,
             1, 5, 9,
             2, 6, 5);
 
         // Verified against http://www.wolframalpha.com/input/?i=determinant+%7B%7B3%2C1%2C4%7D%2C%7B1%2C5%2C9%7D%2C%7B2%2C6%2C5%7D%7D
-        $this->assertEquals(-90, $pi->getDeterminant());
+        $this->assertEqualsWithDelta(-90, $pi->getDeterminant(), self::ERROR_TOLERANCE);
     }
 
-    public function testFourByFourDeterminant(): void
+    public function test_four_by_four_determinant(): void
     {
         $a = new SquareMatrix(1, 2, 3, 4,
             5, 6, 7, 8,
             9, 10, 11, 12,
             13, 14, 15, 16);
 
-        $this->assertEquals(0, $a->getDeterminant());
+        $this->assertEqualsWithDelta(0, $a->getDeterminant(), self::ERROR_TOLERANCE);
 
         $pi = new SquareMatrix(3, 1, 4, 1,
             5, 9, 2, 6,
@@ -65,10 +71,10 @@ class MatrixTest extends TestCase
             9, 7, 9, 3);
 
         // Verified against http://www.wolframalpha.com/input/?i=determinant+%7B+%7B3%2C1%2C4%2C1%7D%2C+%7B5%2C9%2C2%2C6%7D%2C+%7B5%2C3%2C5%2C8%7D%2C+%7B9%2C7%2C9%2C3%7D%7D
-        $this->assertEquals(98, $pi->getDeterminant());
+        $this->assertEqualsWithDelta(98, $pi->getDeterminant(), self::ERROR_TOLERANCE);
     }
 
-    public function testEightByEightDeterminant(): void
+    public function test_eight_by_eight_determinant(): void
     {
         $a = new SquareMatrix(1, 2, 3, 4, 5, 6, 7, 8,
             9, 10, 11, 12, 13, 14, 15, 16,
@@ -79,7 +85,7 @@ class MatrixTest extends TestCase
             49, 50, 51, 52, 53, 54, 55, 56,
             57, 58, 59, 60, 61, 62, 63, 64);
 
-        $this->assertEquals(0, $a->getDeterminant());
+        $this->assertEqualsWithDelta(0, $a->getDeterminant(), self::ERROR_TOLERANCE);
 
         $pi = new SquareMatrix(3, 1, 4, 1, 5, 9, 2, 6,
             5, 3, 5, 8, 9, 7, 9, 3,
@@ -91,10 +97,10 @@ class MatrixTest extends TestCase
             7, 4, 9, 4, 4, 5, 9, 2);
 
         // Verified against http://www.wolframalpha.com/input/?i=det+%7B%7B3%2C1%2C4%2C1%2C5%2C9%2C2%2C6%7D%2C%7B5%2C3%2C5%2C8%2C9%2C7%2C9%2C3%7D%2C%7B2%2C3%2C8%2C4%2C6%2C2%2C6%2C4%7D%2C%7B3%2C3%2C8%2C3%2C2%2C7%2C9%2C5%7D%2C%7B0%2C2%2C8%2C8%2C4%2C1%2C9%2C7%7D%2C%7B1%2C6%2C9%2C3%2C9%2C9%2C3%2C7%7D%2C%7B5%2C1%2C0%2C5%2C8%2C2%2C0%2C9%7D%2C%7B7%2C4%2C9%2C4%2C4%2C5%2C9%2C2%7D%7D
-        $this->assertEquals(1378143, $pi->getDeterminant());
+        $this->assertEqualsWithDelta(1378143, $pi->getDeterminant(), self::ERROR_TOLERANCE);
     }
 
-    public function testEquals(): void
+    public function test_equals(): void
     {
         $a = new SquareMatrix(1, 2,
             3, 4);
@@ -122,6 +128,9 @@ class MatrixTest extends TestCase
         $f = $e->getTranspose();
         $this->assertTrue($d->equals($f));
 
+        // Different sizes are never equal
+        $this->assertFalse($a->equals($c));
+
         // Test rounding (thanks to nsp on GitHub for finding this case)
         $g = new SquareMatrix(1, 2.00000000000001,
             3, 4);
@@ -132,7 +141,7 @@ class MatrixTest extends TestCase
         $this->assertTrue($g->equals($h));
     }
 
-    public function testAdjugate(): void
+    public function test_adjugate(): void
     {
         // From Wikipedia: http://en.wikipedia.org/wiki/Adjugate_matrix
         $a = new SquareMatrix(1, 2,
@@ -154,7 +163,7 @@ class MatrixTest extends TestCase
         $this->assertTrue($d->equals($c->getAdjugate()));
     }
 
-    public function testInverse(): void
+    public function test_inverse(): void
     {
         // see http://www.mathwords.com/i/inverse_of_a_matrix.htm
         $a = new SquareMatrix(4, 3,
@@ -185,5 +194,43 @@ class MatrixTest extends TestCase
 
         $ccInverse = Matrix::multiply($c, $cInverse);
         $this->assertTrue($identity3x3->equals($ccInverse));
+
+        $oneByOne = new SquareMatrix(4);
+        $this->assertTrue((new SquareMatrix(0.25))->equals($oneByOne->getInverse()));
+    }
+
+    public function test_vector_and_diagonal_matrix(): void
+    {
+        $vector = new Vector([1, 2, 3]);
+
+        $this->assertSame(3, $vector->getRowCount());
+        $this->assertSame(1, $vector->getColumnCount());
+        $this->assertSame(2.0, $vector->getValue(1, 0));
+
+        $diagonal = new DiagonalMatrix([1, 2]);
+
+        $this->assertTrue($diagonal->equals(new SquareMatrix(1, 0, 0, 2)));
+        $this->assertTrue(Matrix::add($diagonal, $diagonal)->equals(new SquareMatrix(2, 0, 0, 4)));
+    }
+
+    public function test_determinant_of_non_square_matrix_is_rejected(): void
+    {
+        $this->expectException(LogicException::class);
+
+        Matrix::fromRowsColumns(2, 3, 1, 2, 3, 4, 5, 6)->getDeterminant();
+    }
+
+    public function test_mismatched_sizes_are_rejected(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        Matrix::add(new SquareMatrix(1, 2, 3, 4), new IdentityMatrix(3));
+    }
+
+    public function test_square_matrix_requires_a_square_number_of_values(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new SquareMatrix(1, 2, 3);
     }
 }

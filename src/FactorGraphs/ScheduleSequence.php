@@ -4,24 +4,31 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class ScheduleSequence extends Schedule
+/**
+ * Runs its child schedules one after another.
+ *
+ * @template TValue
+ *
+ * @extends Schedule<TValue>
+ */
+final class ScheduleSequence extends Schedule
 {
-    private array $_schedules;
-
-    public function __construct($name, array $schedules)
-    {
+    /**
+     * @param  list<Schedule<TValue>>  $schedules
+     */
+    public function __construct(
+        string $name,
+        private readonly array $schedules,
+    ) {
         parent::__construct($name);
-        $this->_schedules = $schedules;
     }
 
-    public function visit($depth = -1, $maxDepth = 0)
+    public function visit(): float
     {
-        $maxDelta = 0;
+        $maxDelta = 0.0;
 
-        $schedules = $this->_schedules;
-        foreach ($schedules as $currentSchedule) {
-            $currentVisit = $currentSchedule->visit($depth + 1, $maxDepth);
-            $maxDelta = max($currentVisit, $maxDelta);
+        foreach ($this->schedules as $schedule) {
+            $maxDelta = max($schedule->visit(), $maxDelta);
         }
 
         return $maxDelta;

@@ -4,19 +4,28 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-abstract class Schedule
+use Stringable;
+
+/**
+ * Describes the order in which factors update their messages.
+ *
+ * @template TValue
+ */
+abstract class Schedule implements Stringable
 {
-    private $_name;
+    protected function __construct(
+        private readonly string $name,
+    ) {}
 
-    protected function __construct($name)
+    /**
+     * Runs the schedule.
+     *
+     * @return float The largest change in any marginal that the schedule caused.
+     */
+    abstract public function visit(): float;
+
+    public function __toString(): string
     {
-        $this->_name = $name;
-    }
-
-    abstract public function visit($depth = -1, $maxDepth = 0);
-
-    public function __toString()
-    {
-        return $this->_name;
+        return $this->name;
     }
 }
