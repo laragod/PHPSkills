@@ -4,88 +4,91 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\TrueSkill\Layers;
 
+use Laragod\Skills\FactorGraphs\Factor;
+use Laragod\Skills\FactorGraphs\KeyedVariable;
+use Laragod\Skills\FactorGraphs\ScheduleSequence;
 use Laragod\Skills\FactorGraphs\ScheduleStep;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
 use Laragod\Skills\PartialPlay;
+use Laragod\Skills\Player;
 use Laragod\Skills\TrueSkill\Factors\GaussianWeightedSumFactor;
-use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
 
-class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLayer
+/**
+ * Sums the (partial-play weighted) player performances of every team into a team performance.
+ *
+ * @extends TrueSkillFactorGraphLayer<KeyedVariable<Player, GaussianDistribution>, Variable<GaussianDistribution>>
+ */
+final class PlayerPerformancesToTeamPerformancesLayer extends TrueSkillFactorGraphLayer
 {
-    public function __construct(TrueSkillFactorGraph $parentGraph)
-    {
-        parent::__construct($parentGraph);
-    }
-
     public function buildLayer(): void
     {
-        $inputVariablesGroups = $this->getInputVariablesGroups();
-        foreach ($inputVariablesGroups as $currentTeam) {
-            $localCurrentTeam = $currentTeam;
-            $teamPerformance = $this->createOutputVariable($localCurrentTeam);
-            $newSumFactor = $this->createPlayerToTeamSumFactor($localCurrentTeam, $teamPerformance);
-
-            $this->addLayerFactor($newSumFactor);
+        foreach ($this->getInputVariablesGroups() as $currentTeam) {
+            $teamPerformance = $this->createOutputVariable($currentTeam);
+            $this->addLayerFactor($this->createPlayerToTeamSumFactor($currentTeam, $teamPerformance));
 
             // REVIEW: Does it make sense to have groups of one?
-            $outputVariablesGroups = &$this->getOutputVariablesGroups();
-            $outputVariablesGroups[] = [$teamPerformance];
+            $this->addOutputVariablesGroup([$teamPerformance]);
         }
     }
 
-    public function createPriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
+    public function createPriorSchedule(): ScheduleSequence
     {
-        $localFactors = $this->getLocalFactors();
-
         return $this->scheduleSequence(
             array_map(
-                function ($weightedSumFactor) {
-                    return new ScheduleStep('Perf to Team Perf Step', $weightedSumFactor, 0);
-                },
-                $localFactors),
-            'all player perf to team perf schedule');
+                static fn (Factor $weightedSumFactor): ScheduleStep => new ScheduleStep('Perf to Team Perf Step', $weightedSumFactor, 0),
+                $this->getLocalFactors()
+            ),
+            'all player perf to team perf schedule'
+        );
     }
 
-    protected function createPlayerToTeamSumFactor($teamMembers, $sumVariable): GaussianWeightedSumFactor
-    {
-        $weights = array_map(
-            function ($v) {
-                $player = $v->getKey();
-
-                return PartialPlay::getPartialPlayPercentage($player);
-            },
-            $teamMembers);
-
-        return new GaussianWeightedSumFactor(
-            $sumVariable,
-            $teamMembers,
-            $weights);
-
-    }
-
-    public function createPosteriorSchedule() : ?\Laragod\Skills\FactorGraphs\ScheduleSequence
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
+    public function createPosteriorSchedule(): ScheduleSequence
     {
         $allFactors = [];
-        $localFactors = $this->getLocalFactors();
-        foreach ($localFactors as $currentFactor) {
-            $localCurrentFactor = $currentFactor;
-            $numberOfMessages = $localCurrentFactor->getNumberOfMessages();
+
+        foreach ($this->getLocalFactors() as $currentFactor) {
+            $numberOfMessages = $currentFactor->getNumberOfMessages();
+
             for ($currentIteration = 1; $currentIteration < $numberOfMessages; $currentIteration++) {
-                $allFactors[] = new ScheduleStep('team sum perf @'.$currentIteration,
-                    $localCurrentFactor, $currentIteration);
+                $allFactors[] = new ScheduleStep('team sum perf @'.$currentIteration, $currentFactor, $currentIteration);
             }
         }
 
         return $this->scheduleSequence($allFactors, "all of the team's sum iterations");
     }
 
-    private function createOutputVariable($team)
+    /**
+     * @param  list<KeyedVariable<Player, GaussianDistribution>>  $teamMembers
+     * @param  Variable<GaussianDistribution>  $sumVariable
+     */
+    private function createPlayerToTeamSumFactor(array $teamMembers, Variable $sumVariable): GaussianWeightedSumFactor
     {
-        $memberNames = array_map(function ($currentPlayer) {
-            return (string) ($currentPlayer->getKey());
-        }, $team);
+        $weights = array_map(
+            static fn (KeyedVariable $playerPerformance): float => PartialPlay::getPartialPlayPercentage($playerPerformance->getKey()),
+            $teamMembers
+        );
 
-        $teamMemberNames = \implode(', ', $memberNames);
+        return new GaussianWeightedSumFactor($sumVariable, $teamMembers, $weights);
+    }
 
-        return $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable('Team['.$teamMemberNames."]'s performance");
+    /**
+     * @param  list<KeyedVariable<Player, GaussianDistribution>>  $team
+     * @return Variable<GaussianDistribution>
+     */
+    private function createOutputVariable(array $team): Variable
+    {
+        $memberNames = array_map(
+            static fn (KeyedVariable $playerPerformance): string => (string) $playerPerformance->getKey(),
+            $team
+        );
+
+        return $this->getParentFactorGraph()->getVariableFactory()->createBasicVariable(sprintf("Team[%s]'s performance", implode(', ', $memberNames)));
     }
 }

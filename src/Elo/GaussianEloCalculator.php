@@ -7,25 +7,24 @@ namespace Laragod\Skills\Elo;
 use Laragod\Skills\GameInfo;
 use Laragod\Skills\Numerics\GaussianDistribution;
 
-class GaussianEloCalculator extends TwoPlayerEloCalculator
+/**
+ * Elo with a Gaussian (instead of logistic) win probability, as described in the TrueSkill paper.
+ */
+final class GaussianEloCalculator extends TwoPlayerEloCalculator
 {
-    // From the paper
-    const STABLE_KFACTOR = 24;
+    /** From the TrueSkill paper. */
+    public const STABLE_KFACTOR = 24.0;
 
     public function __construct()
     {
         parent::__construct(new KFactor(self::STABLE_KFACTOR));
     }
 
-    public function getPlayerWinProbability(GameInfo $gameInfo, $playerRating, $opponentRating): float
+    public function getPlayerWinProbability(GameInfo $gameInfo, float $playerRating, float $opponentRating): float
     {
         $ratingDifference = $playerRating - $opponentRating;
 
         // See equation 1.1 in the TrueSkill paper
-        return GaussianDistribution::cumulativeTo(
-            $ratingDifference
-            /
-            (sqrt(2) * $gameInfo->getBeta())
-        );
+        return GaussianDistribution::cumulativeTo($ratingDifference / (sqrt(2) * $gameInfo->getBeta()));
     }
 }

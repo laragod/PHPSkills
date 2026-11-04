@@ -4,70 +4,53 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
+use Stringable;
+
 /**
- * Represents a player who has a Rating.
+ * Represents a player who has a rating.
  */
-class Player implements ISupportPartialPlay, ISupportPartialUpdate
+final readonly class Player implements ISupportPartialPlay, ISupportPartialUpdate, Stringable
 {
-    const DEFAULT_PARTIAL_PLAY_PERCENTAGE = 1.0; // = 100% play time
+    /** 100% play time. */
+    public const DEFAULT_PARTIAL_PLAY_PERCENTAGE = 1.0;
 
-    const DEFAULT_PARTIAL_UPDATE_PERCENTAGE = 1.0; // = receive 100% update
-
-    private $_Id;
-
-    private $_PartialPlayPercentage;
-
-    private $_PartialUpdatePercentage;
+    /** 100% of the update. */
+    public const DEFAULT_PARTIAL_UPDATE_PERCENTAGE = 1.0;
 
     /**
-     * Constructs a player.
-     *
-     * @param  mixed  $id  The identifier for the player, such as a name.
-     * @param  number  $partialPlayPercentage  The weight percentage to give this player when calculating a new rank.
-     * @param  number  $partialUpdatePercentage  Indicated how much of a skill update a player should receive where 0 represents no update and 1.0 represents 100% of the update.
+     * @param  int|string  $id  The identifier for the player, such as a name or a database id.
+     * @param  float  $partialPlayPercentage  The weight (0.0 to 1.0) to give this player when calculating a new rating.
+     * @param  float  $partialUpdatePercentage  How much of a skill update (0.0 to 1.0) the player should receive.
      */
-    public function __construct($id,
-        $partialPlayPercentage = self::DEFAULT_PARTIAL_PLAY_PERCENTAGE,
-        $partialUpdatePercentage = self::DEFAULT_PARTIAL_UPDATE_PERCENTAGE)
-    {
-        // If they don't want to give a player an id, that's ok...
+    public function __construct(
+        private int|string $id,
+        private float $partialPlayPercentage = self::DEFAULT_PARTIAL_PLAY_PERCENTAGE,
+        private float $partialUpdatePercentage = self::DEFAULT_PARTIAL_UPDATE_PERCENTAGE,
+    ) {
         Guard::argumentInRangeInclusive($partialPlayPercentage, 0.0, 1.0, 'partialPlayPercentage');
-        Guard::argumentInRangeInclusive($partialUpdatePercentage, 0, 1.0, 'partialUpdatePercentage');
-        $this->_Id = $id;
-        $this->_PartialPlayPercentage = $partialPlayPercentage;
-        $this->_PartialUpdatePercentage = $partialUpdatePercentage;
+        Guard::argumentInRangeInclusive($partialUpdatePercentage, 0.0, 1.0, 'partialUpdatePercentage');
     }
 
     /**
-     * The identifier for the player, such as a name.
+     * The identifier for the player, such as a name or a database id.
      */
-    public function getId()
+    public function getId(): int|string
     {
-        return $this->_Id;
+        return $this->id;
     }
 
-    /**
-     * Indicates the percent of the time the player should be weighted where 0.0 indicates the player didn't play and 1.0 indicates the player played 100% of the time.
-     */
     public function getPartialPlayPercentage(): float
     {
-        return $this->_PartialPlayPercentage;
+        return $this->partialPlayPercentage;
     }
 
-    /**
-     * Indicated how much of a skill update a player should receive where 0.0 represents no update and 1.0 represents 100% of the update.
-     */
     public function getPartialUpdatePercentage(): float
     {
-        return $this->_PartialUpdatePercentage;
+        return $this->partialUpdatePercentage;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        if ($this->_Id != null) {
-            return (string) $this->_Id;
-        }
-
-        return '';
+        return (string) $this->id;
     }
 }

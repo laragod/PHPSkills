@@ -10,16 +10,24 @@ use Laragod\Skills\Rating;
 use Laragod\Skills\SkillCalculator;
 use Laragod\Skills\Team;
 use Laragod\Skills\Teams;
+use Laragod\Skills\Tests\TestCase;
 
-class TrueSkillCalculatorTests
+/**
+ * Shared TrueSkill scenarios, run against every calculator that supports them.
+ *
+ * If you see more than 3 digits of precision in the decimal point, then the expected values were calculated from
+ * Ralf Herbrich's F# implementation with the same input. It didn't support teams, so team values all came from the
+ * online calculator at http://atom.research.microsoft.com/trueskill/rankcalculator.aspx
+ */
+final class TrueSkillCalculatorTests
 {
-    const ERROR_TOLERANCE_TRUESKILL = 0.085;
+    public const ERROR_TOLERANCE_TRUESKILL = 0.085;
 
-    const ERROR_TOLERANCE_MATCH_QUALITY = 0.0005;
+    public const ERROR_TOLERANCE_MATCH_QUALITY = 0.0005;
 
     // These are the roll-up ones
 
-    public static function testAllTwoPlayerScenarios($testClass, SkillCalculator $calculator): void
+    public static function testAllTwoPlayerScenarios(TestCase $testClass, SkillCalculator $calculator): void
     {
         self::twoPlayerTestNotDrawn($testClass, $calculator);
         self::twoPlayerTestDrawn($testClass, $calculator);
@@ -27,7 +35,7 @@ class TrueSkillCalculatorTests
         self::oneOnOneMassiveUpsetDrawTest($testClass, $calculator);
     }
 
-    public static function testAllTwoTeamScenarios($testClass, SkillCalculator $calculator): void
+    public static function testAllTwoTeamScenarios(TestCase $testClass, SkillCalculator $calculator): void
     {
         self::oneOnTwoSimpleTest($testClass, $calculator);
         self::oneOnTwoSomewhatBalanced($testClass, $calculator);
@@ -46,7 +54,7 @@ class TrueSkillCalculatorTests
         self::fourOnFourSimpleTest($testClass, $calculator);
     }
 
-    public static function testAllMultipleTeamScenarios($testClass, SkillCalculator $calculator): void
+    public static function testAllMultipleTeamScenarios(TestCase $testClass, SkillCalculator $calculator): void
     {
         self::threeTeamsOfOneNotDrawn($testClass, $calculator);
         self::threeTeamsOfOneDrawn($testClass, $calculator);
@@ -58,12 +66,12 @@ class TrueSkillCalculatorTests
         self::twoOnFourOnTwoWinDraw($testClass, $calculator);
     }
 
-    public static function testPartialPlayScenarios($testClass, SkillCalculator $calculator): void
+    public static function testPartialPlayScenarios(TestCase $testClass, SkillCalculator $calculator): void
     {
         self::oneOnTwoBalancedPartialPlay($testClass, $calculator);
     }
 
-    //------------------- Actual Tests ---------------------------
+    // ------------------- Actual Tests ---------------------------
     // If you see more than 3 digits of precision in the decimal point, then the expected values calculated from
     // F# RalfH's implementation with the same input. It didn't support teams, so team values all came from the
     // online calculator at http://atom.research.microsoft.com/trueskill/rankcalculator.aspx
@@ -73,15 +81,15 @@ class TrueSkillCalculatorTests
     // In both cases, there may be some discrepancy after the first decimal point. I think this is due to my implementation
     // using slightly higher precision in GaussianDistribution.
 
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
     // Two Player Tests
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
 
-    private static function twoPlayerTestNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function twoPlayerTestNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -98,12 +106,12 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function twoPlayerTestDrawn($testClass, SkillCalculator $calculator): void
+    private static function twoPlayerTestDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -120,7 +128,7 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function twoPlayerChessTestNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function twoPlayerChessTestNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         // Inspired by a real bug :-)
         $player1 = new Player(1);
@@ -139,11 +147,11 @@ class TrueSkillCalculatorTests
         self::assertRating($testClass, 1185.0383099003536, 42.485604606897752, $player2NewRating);
     }
 
-    private static function oneOnOneMassiveUpsetDrawTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnOneMassiveUpsetDrawTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
 
@@ -164,23 +172,23 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.110, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
     // Two Team Tests
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
 
-    private static function oneOnTwoSimpleTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnTwoSimpleTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, $gameInfo->getDefaultRating());
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
 
@@ -197,25 +205,25 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.135, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
     // Two Team Tests
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
 
-    private static function twoOnTwoSimpleTest($testClass, SkillCalculator $calculator): void
+    private static function twoOnTwoSimpleTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
         $team1->addPlayer($player2, $gameInfo->getDefaultRating());
 
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
@@ -233,19 +241,19 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function oneOnTwoSomewhatBalanced($testClass, SkillCalculator $calculator): void
+    private static function oneOnTwoSomewhatBalanced(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, new Rating(40, 6));
 
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, new Rating(20, 7));
         $team2->addPlayer($player3, new Rating(25, 8));
 
@@ -262,20 +270,20 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.478, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function oneOnThreeSimpleTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnThreeSimpleTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, $gameInfo->getDefaultRating());
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
@@ -294,19 +302,19 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.012, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function oneOnTwoDrawTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnTwoDrawTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, $gameInfo->getDefaultRating());
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
 
@@ -323,20 +331,20 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.135, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function oneOnThreeDrawTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnThreeDrawTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, $gameInfo->getDefaultRating());
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
@@ -355,13 +363,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.012, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function oneOnSevenSimpleTest($testClass, SkillCalculator $calculator): void
+    private static function oneOnSevenSimpleTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
 
         $player2 = new Player(2);
@@ -372,7 +380,7 @@ class TrueSkillCalculatorTests
         $player7 = new Player(7);
         $player8 = new Player(8);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player2, $gameInfo->getDefaultRating());
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
@@ -399,13 +407,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.000, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function threeOnTwoTests($testClass, SkillCalculator $calculator): void
+    private static function threeOnTwoTests(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, new Rating(28, 7));
         $team1->addPlayer($player2, new Rating(27, 6));
         $team1->addPlayer($player3, new Rating(26, 5));
@@ -413,11 +421,11 @@ class TrueSkillCalculatorTests
         $player4 = new Player(4);
         $player5 = new Player(5);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player4, new Rating(30, 4));
         $team2->addPlayer($player5, new Rating(31, 3));
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $teams = Teams::concat($team1, $team2);
         $newRatingsWinLoseExpected = $calculator->calculateNewRatings($gameInfo, $teams, [1, 2]);
@@ -445,21 +453,21 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.254, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function twoOnTwoUnbalancedDrawTest($testClass, SkillCalculator $calculator): void
+    private static function twoOnTwoUnbalancedDrawTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, new Rating(15, 8));
         $team1->addPlayer($player2, new Rating(20, 6));
 
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player3, new Rating(25, 4));
         $team2->addPlayer($player4, new Rating(30, 3));
 
@@ -477,21 +485,21 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.214, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function twoOnTwoUpsetTest($testClass, SkillCalculator $calculator): void
+    private static function twoOnTwoUpsetTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, new Rating(20, 8));
         $team1->addPlayer($player2, new Rating(25, 6));
 
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player3, new Rating(35, 7));
         $team2->addPlayer($player4, new Rating(40, 5));
 
@@ -509,16 +517,16 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.084, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function fourOnFourSimpleTest($testClass, SkillCalculator $calculator): void
+    private static function fourOnFourSimpleTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
         $team1->addPlayer($player2, $gameInfo->getDefaultRating());
         $team1->addPlayer($player3, $gameInfo->getDefaultRating());
@@ -529,7 +537,7 @@ class TrueSkillCalculatorTests
         $player7 = new Player(7);
         $player8 = new Player(8);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player5, $gameInfo->getDefaultRating());
         $team2->addPlayer($player6, $gameInfo->getDefaultRating());
         $team2->addPlayer($player7, $gameInfo->getDefaultRating());
@@ -554,21 +562,21 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function twoOnTwoDrawTest($testClass, SkillCalculator $calculator): void
+    private static function twoOnTwoDrawTest(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, $gameInfo->getDefaultRating());
         $team1->addPlayer($player2, $gameInfo->getDefaultRating());
 
         $player3 = new Player(3);
         $player4 = new Player(4);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player3, $gameInfo->getDefaultRating());
         $team2->addPlayer($player4, $gameInfo->getDefaultRating());
 
@@ -586,13 +594,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.447, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function threeTeamsOfOneNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function threeTeamsOfOneNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -613,13 +621,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.200, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function threeTeamsOfOneDrawn($testClass, SkillCalculator $calculator): void
+    private static function threeTeamsOfOneDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -640,13 +648,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.200, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function fourTeamsOfOneNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function fourTeamsOfOneNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
         $player4 = new Player(4);
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -672,14 +680,14 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.089, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function fiveTeamsOfOneNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function fiveTeamsOfOneNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
         $player3 = new Player(3);
         $player4 = new Player(4);
         $player5 = new Player(5);
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -708,7 +716,7 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.040, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function eightTeamsOfOneDrawn($testClass, SkillCalculator $calculator): void
+    private static function eightTeamsOfOneDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
@@ -718,7 +726,7 @@ class TrueSkillCalculatorTests
         $player6 = new Player(6);
         $player7 = new Player(7);
         $player8 = new Player(8);
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -756,10 +764,10 @@ class TrueSkillCalculatorTests
         $player8NewRating = $newRatings->getRating($player8);
         self::assertRating($testClass, 25.000, 4.592, $player8NewRating);
 
-        self::AssertMatchQuality($testClass, 0.004, $calculator->calculateMatchQuality($gameInfo, $teams));
+        self::assertMatchQuality($testClass, 0.004, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function eightTeamsOfOneUpset($testClass, SkillCalculator $calculator): void
+    private static function eightTeamsOfOneUpset(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
@@ -770,7 +778,7 @@ class TrueSkillCalculatorTests
         $player7 = new Player(7);
         $player8 = new Player(8);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, new Rating(10, 8));
         $team2 = new Team($player2, new Rating(15, 7));
@@ -811,7 +819,7 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.000, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    private static function sixteenTeamsOfOneNotDrawn($testClass, SkillCalculator $calculator): void
+    private static function sixteenTeamsOfOneNotDrawn(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
@@ -830,7 +838,7 @@ class TrueSkillCalculatorTests
         $player15 = new Player(15);
         $player16 = new Player(16);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $team1 = new Team($player1, $gameInfo->getDefaultRating());
         $team2 = new Team($player2, $gameInfo->getDefaultRating());
@@ -908,14 +916,14 @@ class TrueSkillCalculatorTests
         self::assertRating($testClass, 9.46054223053080, 5.27581643889032, $player16NewRating);
     }
 
-    private static function twoOnFourOnTwoWinDraw($testClass, SkillCalculator $calculator): void
+    private static function twoOnFourOnTwoWinDraw(TestCase $testClass, SkillCalculator $calculator): void
     {
         $player1 = new Player(1);
         $player2 = new Player(2);
 
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
-        $team1 = new Team();
+        $team1 = new Team;
         $team1->addPlayer($player1, new Rating(40, 4));
         $team1->addPlayer($player2, new Rating(45, 3));
 
@@ -924,7 +932,7 @@ class TrueSkillCalculatorTests
         $player5 = new Player(5);
         $player6 = new Player(6);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($player3, new Rating(20, 7));
         $team2->addPlayer($player4, new Rating(19, 6));
         $team2->addPlayer($player5, new Rating(30, 9));
@@ -933,7 +941,7 @@ class TrueSkillCalculatorTests
         $player7 = new Player(7);
         $player8 = new Player(8);
 
-        $team3 = new Team();
+        $team3 = new Team;
         $team3->addPlayer($player7, new Rating(50, 5));
         $team3->addPlayer($player8, new Rating(30, 2));
 
@@ -953,13 +961,13 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.367, $calculator->calculateMatchQuality($gameInfo, $teams));
     }
 
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
     // Partial Play Tests
-    //------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------
 
-    private static function oneOnTwoBalancedPartialPlay($testClass, SkillCalculator $calculator): void
+    private static function oneOnTwoBalancedPartialPlay(TestCase $testClass, SkillCalculator $calculator): void
     {
-        $gameInfo = new GameInfo();
+        $gameInfo = new GameInfo;
 
         $p1 = new Player(1);
         $team1 = new Team($p1, $gameInfo->getDefaultRating());
@@ -967,7 +975,7 @@ class TrueSkillCalculatorTests
         $p2 = new Player(2, 0.0);
         $p3 = new Player(3, 1.00);
 
-        $team2 = new Team();
+        $team2 = new Team;
         $team2->addPlayer($p2, $gameInfo->getDefaultRating());
         $team2->addPlayer($p3, $gameInfo->getDefaultRating());
 
@@ -987,14 +995,14 @@ class TrueSkillCalculatorTests
         self::assertMatchQuality($testClass, 0.44721358745011336, $matchQuality);
     }
 
-    private static function assertRating($testClass, $expectedMean, $expectedStandardDeviation, $actual): void
+    private static function assertRating(TestCase $testClass, float $expectedMean, float $expectedStandardDeviation, Rating $actual): void
     {
-        $testClass->assertEquals($expectedMean, $actual->getMean(), '', self::ERROR_TOLERANCE_TRUESKILL);
-        $testClass->assertEquals($expectedStandardDeviation, $actual->getStandardDeviation(), '', self::ERROR_TOLERANCE_TRUESKILL);
+        $testClass->assertEqualsWithDelta($expectedMean, $actual->getMean(), self::ERROR_TOLERANCE_TRUESKILL);
+        $testClass->assertEqualsWithDelta($expectedStandardDeviation, $actual->getStandardDeviation(), self::ERROR_TOLERANCE_TRUESKILL);
     }
 
-    private static function assertMatchQuality($testClass, $expectedMatchQuality, $actualMatchQuality): void
+    private static function assertMatchQuality(TestCase $testClass, float $expectedMatchQuality, float $actualMatchQuality): void
     {
-        $testClass->assertEquals($expectedMatchQuality, $actualMatchQuality, '', self::ERROR_TOLERANCE_MATCH_QUALITY);
+        $testClass->assertEqualsWithDelta($expectedMatchQuality, $actualMatchQuality, self::ERROR_TOLERANCE_MATCH_QUALITY);
     }
 }

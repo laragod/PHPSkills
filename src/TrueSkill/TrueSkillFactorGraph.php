@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Laragod\Skills\TrueSkill;
 
 use Laragod\Skills\FactorGraphs\FactorGraph;
+use Laragod\Skills\FactorGraphs\FactorGraphLayer;
 use Laragod\Skills\FactorGraphs\FactorList;
 use Laragod\Skills\FactorGraphs\ScheduleSequence;
+use Laragod\Skills\FactorGraphs\Variable;
 use Laragod\Skills\FactorGraphs\VariableFactory;
 use Laragod\Skills\GameInfo;
 use Laragod\Skills\Numerics\GaussianDistribution;
 use Laragod\Skills\Rating;
 use Laragod\Skills\RatingContainer;
+use Laragod\Skills\Team;
 use Laragod\Skills\TrueSkill\Layers\IteratedTeamDifferencesInnerLayer;
 use Laragod\Skills\TrueSkill\Layers\PlayerPerformancesToTeamPerformancesLayer;
 use Laragod\Skills\TrueSkill\Layers\PlayerPriorValuesToSkillsLayer;
@@ -19,97 +22,117 @@ use Laragod\Skills\TrueSkill\Layers\PlayerSkillsToPerformancesLayer;
 use Laragod\Skills\TrueSkill\Layers\TeamDifferencesComparisonLayer;
 use Laragod\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferencesLayer;
 
-class TrueSkillFactorGraph extends FactorGraph
+/**
+ * The full TrueSkill factor graph for any number of teams with any number of players.
+ *
+ * @extends FactorGraph<GaussianDistribution>
+ */
+final class TrueSkillFactorGraph extends FactorGraph
 {
-    private \Laragod\Skills\GameInfo $_gameInfo;
+    private readonly PlayerPriorValuesToSkillsLayer $priorLayer;
 
-    private array $_layers;
+    private readonly PlayerSkillsToPerformancesLayer $skillsToPerformancesLayer;
 
-    private \Laragod\Skills\TrueSkill\Layers\PlayerPriorValuesToSkillsLayer $_priorLayer;
+    private readonly PlayerPerformancesToTeamPerformancesLayer $performancesToTeamPerformancesLayer;
 
-    public function __construct(GameInfo $gameInfo, array $teams, array $teamRanks)
-    {
-        $this->_priorLayer = new PlayerPriorValuesToSkillsLayer($this, $teams);
-        $this->_gameInfo = $gameInfo;
-        $newFactory = new VariableFactory(
-            function () {
-                return GaussianDistribution::fromPrecisionMean(0, 0);
-            });
+    private readonly IteratedTeamDifferencesInnerLayer $teamDifferencesLayer;
 
-        $this->setVariableFactory($newFactory);
-        $this->_layers = [
-            $this->_priorLayer,
-            new PlayerSkillsToPerformancesLayer($this),
-            new PlayerPerformancesToTeamPerformancesLayer($this),
-            new IteratedTeamDifferencesInnerLayer(
-                $this,
-                new TeamPerformancesToTeamPerformanceDifferencesLayer($this),
-                new TeamDifferencesComparisonLayer($this, $teamRanks)),
-        ];
+    /**
+     * @param  list<Team>  $teams  The teams, already sorted by rank.
+     * @param  list<int>  $teamRanks  The rank of each team, sorted in non-decreasing order.
+     */
+    public function __construct(
+        private readonly GameInfo $gameInfo,
+        array $teams,
+        array $teamRanks,
+    ) {
+        parent::__construct(new VariableFactory(
+            static fn (): GaussianDistribution => GaussianDistribution::fromPrecisionMean(0.0, 0.0)
+        ));
+
+        $this->priorLayer = new PlayerPriorValuesToSkillsLayer($this, $teams);
+        $this->skillsToPerformancesLayer = new PlayerSkillsToPerformancesLayer($this);
+        $this->performancesToTeamPerformancesLayer = new PlayerPerformancesToTeamPerformancesLayer($this);
+        $this->teamDifferencesLayer = new IteratedTeamDifferencesInnerLayer(
+            $this,
+            new TeamPerformancesToTeamPerformanceDifferencesLayer($this),
+            new TeamDifferencesComparisonLayer($this, $teamRanks)
+        );
     }
 
     public function getGameInfo(): GameInfo
     {
-        return $this->_gameInfo;
+        return $this->gameInfo;
+    }
+
+    /**
+     * The layers from the priors down to the team comparisons.
+     *
+     * @return list<FactorGraphLayer<GaussianDistribution, covariant Variable<GaussianDistribution>, covariant Variable<GaussianDistribution>>>
+     */
+    private function getLayers(): array
+    {
+        return [
+            $this->priorLayer,
+            $this->skillsToPerformancesLayer,
+            $this->performancesToTeamPerformancesLayer,
+            $this->teamDifferencesLayer,
+        ];
     }
 
     public function buildGraph(): void
     {
-        $lastOutput = null;
+        $this->priorLayer->buildLayer();
 
-        $layers = $this->_layers;
-        foreach ($layers as $currentLayer) {
-            if ($lastOutput != null) {
-                $currentLayer->setInputVariablesGroups($lastOutput);
-            }
+        $this->skillsToPerformancesLayer->setInputVariablesGroups($this->priorLayer->getOutputVariablesGroups());
+        $this->skillsToPerformancesLayer->buildLayer();
 
-            $currentLayer->buildLayer();
+        $this->performancesToTeamPerformancesLayer->setInputVariablesGroups($this->skillsToPerformancesLayer->getOutputVariablesGroups());
+        $this->performancesToTeamPerformancesLayer->buildLayer();
 
-            $lastOutput = $currentLayer->getOutputVariablesGroups();
-        }
+        $this->teamDifferencesLayer->setInputVariablesGroups($this->performancesToTeamPerformancesLayer->getOutputVariablesGroups());
+        $this->teamDifferencesLayer->buildLayer();
     }
 
     public function runSchedule(): void
     {
-        $fullSchedule = $this->createFullSchedule();
-        $fullSchedule->visit();
+        $this->createFullSchedule()->visit();
     }
 
     public function getProbabilityOfRanking(): float
     {
-        $factorList = new FactorList();
+        /** @var FactorList<GaussianDistribution> $factorList */
+        $factorList = new FactorList;
 
-        $layers = $this->_layers;
-        foreach ($layers as $currentLayer) {
-            $localFactors = $currentLayer->getLocalFactors();
-            foreach ($localFactors as $currentFactor) {
-                $localCurrentFactor = $currentFactor;
-                $factorList->addFactor($localCurrentFactor);
+        foreach ($this->getLayers() as $currentLayer) {
+            foreach ($currentLayer->getLocalFactors() as $currentFactor) {
+                $factorList->addFactor($currentFactor);
             }
         }
 
-        $logZ = $factorList->getLogNormalization();
-
-        return exp($logZ);
+        return exp($factorList->getLogNormalization());
     }
 
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
     private function createFullSchedule(): ScheduleSequence
     {
         $fullSchedule = [];
+        $layers = $this->getLayers();
 
-        $layers = $this->_layers;
         foreach ($layers as $currentLayer) {
             $currentPriorSchedule = $currentLayer->createPriorSchedule();
-            if ($currentPriorSchedule != null) {
+
+            if ($currentPriorSchedule !== null) {
                 $fullSchedule[] = $currentPriorSchedule;
             }
         }
 
-        $allLayersReverse = array_reverse($this->_layers);
-
-        foreach ($allLayersReverse as $currentLayer) {
+        foreach (array_reverse($layers) as $currentLayer) {
             $currentPosteriorSchedule = $currentLayer->createPosteriorSchedule();
-            if ($currentPosteriorSchedule != null) {
+
+            if ($currentPosteriorSchedule !== null) {
                 $fullSchedule[] = $currentPosteriorSchedule;
             }
         }
@@ -119,16 +142,16 @@ class TrueSkillFactorGraph extends FactorGraph
 
     public function getUpdatedRatings(): RatingContainer
     {
-        $result = new RatingContainer();
+        $result = new RatingContainer;
 
-        $priorLayerOutputVariablesGroups = $this->_priorLayer->getOutputVariablesGroups();
-        foreach ($priorLayerOutputVariablesGroups as $currentTeam) {
-            foreach ($currentTeam as $currentPlayer) {
-                $localCurrentPlayer = $currentPlayer->getKey();
-                $newRating = new Rating($currentPlayer->getValue()->getMean(),
-                    $currentPlayer->getValue()->getStandardDeviation());
+        foreach ($this->priorLayer->getOutputVariablesGroups() as $currentTeam) {
+            foreach ($currentTeam as $currentPlayerSkill) {
+                $posterior = $currentPlayerSkill->getValue();
 
-                $result->setRating($localCurrentPlayer, $newRating);
+                $result->setRating(
+                    $currentPlayerSkill->getKey(),
+                    new Rating($posterior->getMean(), $posterior->getStandardDeviation())
+                );
             }
         }
 

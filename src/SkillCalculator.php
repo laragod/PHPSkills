@@ -4,72 +4,82 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-use Exception;
+use InvalidArgumentException;
 
 /**
  * Base class for all skill calculator implementations.
  */
 abstract class SkillCalculator
 {
-    private $_supportedOptions;
-
-    private \Laragod\Skills\PlayersRange $_playersPerTeamAllowed;
-
-    private \Laragod\Skills\TeamsRange $_totalTeamsAllowed;
-
-    protected function __construct($supportedOptions, TeamsRange $totalTeamsAllowed, PlayersRange $playerPerTeamAllowed)
-    {
-        $this->_supportedOptions = $supportedOptions;
-        $this->_totalTeamsAllowed = $totalTeamsAllowed;
-        $this->_playersPerTeamAllowed = $playerPerTeamAllowed;
-    }
+    /**
+     * @param  int  $supportedOptions  A bit mask of SkillCalculatorSupportedOptions constants.
+     */
+    protected function __construct(
+        private readonly int $supportedOptions,
+        private readonly TeamsRange $totalTeamsAllowed,
+        private readonly PlayersRange $playersPerTeamAllowed,
+    ) {}
 
     /**
      * Calculates new ratings based on the prior ratings and team ranks.
      *
      * @param  GameInfo  $gameInfo  Parameters for the game.
-     * @param  array  $teamsOfPlayerToRatings  A mapping of team players and their ratings.
-     * @param  array  $teamRanks  The ranks of the teams where 1 is first place. For a tie, repeat the number (e.g. 1, 2, 2).
+     * @param  list<Team>  $teams  The teams that played, each mapping its players to their current ratings.
+     * @param  list<int>  $teamRanks  The rank of each team where 1 is first place. For a tie, repeat the number (e.g. 1, 2, 2).
      * @return RatingContainer All the players and their new ratings.
      */
-    abstract public function calculateNewRatings(GameInfo $gameInfo,
-        array $teamsOfPlayerToRatings,
-        array $teamRanks): RatingContainer;
+    abstract public function calculateNewRatings(GameInfo $gameInfo, array $teams, array $teamRanks): RatingContainer;
 
     /**
      * Calculates the match quality as the likelihood of all teams drawing.
      *
      * @param  GameInfo  $gameInfo  Parameters for the game.
-     * @param  array  $teamsOfPlayerToRatings  A mapping of team players and their ratings.
-     * @return float The quality of the match between the teams as a percentage (0% = bad, 100% = well matched).
+     * @param  list<Team>  $teams  The teams that would play, each mapping its players to their current ratings.
+     * @return float The quality of the match between the teams from 0.0 (bad) to 1.0 (well matched).
      */
-    abstract public function calculateMatchQuality(GameInfo $gameInfo, array $teamsOfPlayerToRatings): float;
+    abstract public function calculateMatchQuality(GameInfo $gameInfo, array $teams): float;
 
-    public function isSupported($option): bool
+    /**
+     * @param  int  $option  One of the SkillCalculatorSupportedOptions constants.
+     */
+    public function isSupported(int $option): bool
     {
-        return ($this->_supportedOptions & $option) == $option;
+        return ($this->supportedOptions & $option) === $option;
     }
 
-    protected function validateTeamCountAndPlayersCountPerTeam(array $teamsOfPlayerToRatings) : void
+    /**
+     * @param  list<Team>  $teams
+     */
+    protected function validateTeamCountAndPlayersCountPerTeam(array $teams): void
     {
-        $this->validateTeamCountAndPlayersCountPerTeamWithRanges($teamsOfPlayerToRatings, $this->_totalTeamsAllowed, $this->_playersPerTeamAllowed);
-    }
-
-    private function validateTeamCountAndPlayersCountPerTeamWithRanges(array $teams,
-        TeamsRange $totalTeams,
-        PlayersRange $playersPerTeam): void
-    {
-        $countOfTeams = 0;
-
-        foreach ($teams as $currentTeam) {
-            if (! $playersPerTeam->isInRange(count($currentTeam))) {
-                throw new Exception('Player count is not in range');
+        foreach ($teams as $index => $team) {
+            if (! $this->playersPerTeamAllowed->isInRange($team->count())) {
+                throw new InvalidArgumentException(sprintf(
+                    'Team %d has %d player(s); this calculator supports %s player(s) per team',
+                    $index,
+                    $team->count(),
+                    $this->playersPerTeamAllowed,
+                ));
             }
-            $countOfTeams++;
         }
 
-        if (! $totalTeams->isInRange($countOfTeams)) {
-            throw new Exception('Team range is not in range');
+        if (! $this->totalTeamsAllowed->isInRange(count($teams))) {
+            throw new InvalidArgumentException(sprintf(
+                '%d team(s) given; this calculator supports %s teams',
+                count($teams),
+                $this->totalTeamsAllowed,
+            ));
+        }
+    }
+
+    /**
+     * @param  list<Team>  $teams
+     * @param  list<int>  $teamRanks
+     */
+    protected function validateTeamRanks(array $teams, array $teamRanks): void
+    {
+        if (count($teams) !== count($teamRanks)) {
+            throw new InvalidArgumentException(sprintf('Expected one rank per team, got %d teams and %d ranks', count($teams), count($teamRanks)));
         }
     }
 }

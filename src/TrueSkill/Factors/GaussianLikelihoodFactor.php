@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\TrueSkill\Factors;
 
-use Exception;
-use Laragod\Skills\FactorGraphs\KeyedVariable;
 use Laragod\Skills\FactorGraphs\Message;
 use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Guard;
 use Laragod\Skills\Numerics\GaussianDistribution;
 
 /**
@@ -15,40 +14,57 @@ use Laragod\Skills\Numerics\GaussianDistribution;
  *
  * See the accompanying math paper for more details.
  */
-class GaussianLikelihoodFactor extends GaussianFactor
+final class GaussianLikelihoodFactor extends GaussianFactor
 {
-    private float $_precision;
+    private readonly float $precision;
 
-    public function __construct($betaSquared, Variable $variable1, Variable $variable2)
+    /**
+     * @param  Variable<GaussianDistribution>  $variable1
+     * @param  Variable<GaussianDistribution>  $variable2
+     */
+    public function __construct(float $betaSquared, Variable $variable1, Variable $variable2)
     {
         parent::__construct(sprintf('Likelihood of %s going to %s', $variable2, $variable1));
-        $this->_precision = 1.0 / $betaSquared;
+        $this->precision = 1.0 / $betaSquared;
         $this->createVariableToMessageBinding($variable1);
         $this->createVariableToMessageBinding($variable2);
     }
 
-    public function getLogNormalization() : int|float
+    public function getLogNormalization(): float
     {
-        /** @var KeyedVariable[]|mixed $vars */
-        $vars = $this->getVariables();
-        /** @var Message[] $messages */
-        $messages = $this->getMessages();
-
         return GaussianDistribution::logRatioNormalization(
-            $vars[0]->getValue(),
-            $messages[0]->getValue()
+            $this->getVariables()[0]->getValue(),
+            $this->getMessages()[0]->getValue()
         );
     }
 
-    private function updateHelper(Message $message1, Message $message2, Variable $variable1, Variable $variable2)
+    public function updateMessageIndex(int $messageIndex): float
     {
-        $message1Value = clone $message1->getValue();
-        $message2Value = clone $message2->getValue();
+        $messages = $this->getMessages();
+        $variables = $this->getVariables();
 
-        $marginal1 = clone $variable1->getValue();
-        $marginal2 = clone $variable2->getValue();
+        Guard::argumentIsValidIndex($messageIndex, count($messages), 'messageIndex');
 
-        $a = $this->_precision / ($this->_precision + $marginal2->getPrecision() - $message2Value->getPrecision());
+        return $messageIndex === 0
+            ? $this->updateHelper($messages[0], $messages[1], $variables[0], $variables[1])
+            : $this->updateHelper($messages[1], $messages[0], $variables[1], $variables[0]);
+    }
+
+    /**
+     * @param  Message<GaussianDistribution>  $message1
+     * @param  Message<GaussianDistribution>  $message2
+     * @param  Variable<GaussianDistribution>  $variable1
+     * @param  Variable<GaussianDistribution>  $variable2
+     */
+    private function updateHelper(Message $message1, Message $message2, Variable $variable1, Variable $variable2): float
+    {
+        $message1Value = $message1->getValue();
+        $message2Value = $message2->getValue();
+
+        $marginal1 = $variable1->getValue();
+        $marginal2 = $variable2->getValue();
+
+        $a = $this->precision / ($this->precision + $marginal2->getPrecision() - $message2Value->getPrecision());
 
         $newMessage = GaussianDistribution::fromPrecisionMean(
             $a * ($marginal2->getPrecisionMean() - $message2Value->getPrecisionMean()),
@@ -60,28 +76,10 @@ class GaussianLikelihoodFactor extends GaussianFactor
         $newMarginal = GaussianDistribution::multiply($oldMarginalWithoutMessage, $newMessage);
 
         // Update the message and marginal
-
         $message1->setValue($newMessage);
         $variable1->setValue($newMarginal);
 
         // Return the difference in the new marginal
-        return GaussianDistribution::subtract($newMarginal, $marginal1);
-    }
-
-    public function updateMessageIndex($messageIndex)
-    {
-        $messages = $this->getMessages();
-        $vars = $this->getVariables();
-
-        switch ($messageIndex) {
-            case 0:
-                return $this->updateHelper($messages[0], $messages[1],
-                    $vars[0], $vars[1]);
-            case 1:
-                return $this->updateHelper($messages[1], $messages[0],
-                    $vars[1], $vars[0]);
-            default:
-                throw new Exception();
-        }
+        return GaussianDistribution::absoluteDifference($newMarginal, $marginal1);
     }
 }

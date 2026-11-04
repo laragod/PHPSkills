@@ -4,29 +4,31 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\Numerics;
 
-use Exception;
+use InvalidArgumentException;
+use LogicException;
 
+/**
+ * A small, naive dense matrix. Only what TrueSkill's match quality calculation needs.
+ */
 class Matrix
 {
-    const ERROR_TOLERANCE = 0.0000000001;
+    public const ERROR_TOLERANCE = 0.0000000001;
 
-    private $_matrixRowData;
+    /**
+     * @param  array<int, array<int, float>>  $rowData  Values indexed by [row][column].
+     */
+    public function __construct(
+        private readonly int $rowCount = 0,
+        private readonly int $columnCount = 0,
+        private array $rowData = [],
+    ) {}
 
-    private $_rowCount;
-
-    private $_columnCount;
-
-    public function __construct($rows = 0, $columns = 0, $matrixData = null)
+    /**
+     * @param  array<int, array<int, float>>  $columnValues  Values indexed by [column][row].
+     */
+    public static function fromColumnValues(int $rows, int $columns, array $columnValues): Matrix
     {
-        $this->_rowCount = $rows;
-        $this->_columnCount = $columns;
-        $this->_matrixRowData = $matrixData;
-    }
-
-    public static function fromColumnValues($rows, $columns, $columnValues): Matrix
-    {
-        $data = [];
-        $result = new Matrix($rows, $columns, $data);
+        $result = new Matrix($rows, $columns);
 
         for ($currentColumn = 0; $currentColumn < $columns; $currentColumn++) {
             $currentColumnData = $columnValues[$currentColumn];
@@ -39,153 +41,145 @@ class Matrix
         return $result;
     }
 
-    public static function fromRowsColumns(...$args): Matrix
+    /**
+     * @param  float  ...$values  The values in row-major order.
+     */
+    public static function fromRowsColumns(int $rows, int $cols, float ...$values): Matrix
     {
-        $rows = $args[0];
-        $cols = $args[1];
+        $values = array_values($values);
+
+        if (count($values) !== $rows * $cols) {
+            throw new InvalidArgumentException(sprintf('Expected %d values for a %dx%d matrix, got %d', $rows * $cols, $rows, $cols, count($values)));
+        }
+
         $result = new Matrix($rows, $cols);
-        $currentIndex = 2;
+        $currentIndex = 0;
 
         for ($currentRow = 0; $currentRow < $rows; $currentRow++) {
             for ($currentCol = 0; $currentCol < $cols; $currentCol++) {
-                $result->setValue($currentRow, $currentCol, $args[$currentIndex++]);
+                $result->setValue($currentRow, $currentCol, $values[$currentIndex++]);
             }
         }
 
         return $result;
     }
 
-    public function getRowCount()
+    public function getRowCount(): int
     {
-        return $this->_rowCount;
+        return $this->rowCount;
     }
 
-    public function getColumnCount()
+    public function getColumnCount(): int
     {
-        return $this->_columnCount;
+        return $this->columnCount;
     }
 
-    public function getValue($row, $col)
+    public function getValue(int $row, int $col): float
     {
-        return $this->_matrixRowData[$row][$col];
+        return $this->rowData[$row][$col];
     }
 
-    public function setValue($row, $col, $value): void
+    public function setValue(int $row, int $col, float $value): void
     {
-        $this->_matrixRowData[$row][$col] = $value;
+        $this->rowData[$row][$col] = $value;
     }
 
     public function getTranspose(): Matrix
     {
-        // Just flip everything
         $transposeMatrix = [];
 
-        $rowMatrixData = $this->_matrixRowData;
-        for ($currentRowTransposeMatrix = 0;
-            $currentRowTransposeMatrix < $this->_columnCount;
-            $currentRowTransposeMatrix++) {
-            for ($currentColumnTransposeMatrix = 0;
-                $currentColumnTransposeMatrix < $this->_rowCount;
-                $currentColumnTransposeMatrix++) {
-                $transposeMatrix[$currentRowTransposeMatrix][$currentColumnTransposeMatrix] =
-                    $rowMatrixData[$currentColumnTransposeMatrix][$currentRowTransposeMatrix];
+        for ($row = 0; $row < $this->columnCount; $row++) {
+            for ($column = 0; $column < $this->rowCount; $column++) {
+                $transposeMatrix[$row][$column] = $this->rowData[$column][$row];
             }
         }
 
-        return new Matrix($this->_columnCount, $this->_rowCount, $transposeMatrix);
+        return new Matrix($this->columnCount, $this->rowCount, $transposeMatrix);
     }
 
     private function isSquare(): bool
     {
-        return ($this->_rowCount == $this->_columnCount) && ($this->_rowCount > 0);
+        return $this->rowCount === $this->columnCount && $this->rowCount > 0;
     }
 
-    public function getDeterminant()
+    public function getDeterminant(): float
     {
-        // Basic argument checking
         if (! $this->isSquare()) {
-            throw new Exception('Matrix must be square!');
+            throw new LogicException('Matrix must be square');
         }
 
-        if ($this->_rowCount == 1) {
-            // Really happy path :)
-            return $this->_matrixRowData[0][0];
+        if ($this->rowCount === 1) {
+            return $this->rowData[0][0];
         }
 
-        if ($this->_rowCount == 2) {
-            // Happy path!
+        if ($this->rowCount === 2) {
             // Given:
             // | a b |
             // | c d |
             // The determinant is ad - bc
-            $a = $this->_matrixRowData[0][0];
-            $b = $this->_matrixRowData[0][1];
-            $c = $this->_matrixRowData[1][0];
-            $d = $this->_matrixRowData[1][1];
+            $a = $this->rowData[0][0];
+            $b = $this->rowData[0][1];
+            $c = $this->rowData[1][0];
+            $d = $this->rowData[1][1];
 
             return $a * $d - $b * $c;
         }
 
-        // I use the Laplace expansion here since it's straightforward to implement.
-        // It's O(n^2) and my implementation is especially poor performing, but the
-        // core idea is there. Perhaps I should replace it with a better algorithm
-        // later.
+        // Laplace expansion along the first row. Straightforward, if slow, but the
+        // matrices involved in match quality are tiny.
         // See http://en.wikipedia.org/wiki/Laplace_expansion for details
-
         $result = 0.0;
 
-        // I expand along the first row
-        for ($currentColumn = 0; $currentColumn < $this->_columnCount; $currentColumn++) {
-            $firstRowColValue = $this->_matrixRowData[0][$currentColumn];
+        for ($currentColumn = 0; $currentColumn < $this->columnCount; $currentColumn++) {
+            $firstRowColValue = $this->rowData[0][$currentColumn];
             $cofactor = $this->getCofactor(0, $currentColumn);
-            $itemToAdd = $firstRowColValue * $cofactor;
-            $result += $itemToAdd;
+            $result += $firstRowColValue * $cofactor;
         }
 
         return $result;
     }
 
-    public function getAdjugate() : SquareMatrix|Matrix
+    public function getAdjugate(): Matrix
     {
         if (! $this->isSquare()) {
-            throw new Exception('Matrix must be square!');
+            throw new LogicException('Matrix must be square');
         }
 
         // See http://en.wikipedia.org/wiki/Adjugate_matrix
-        if ($this->_rowCount == 2) {
-            // Happy path!
+        if ($this->rowCount === 2) {
             // Adjugate of:
             // | a b |
             // | c d |
             // is
             // | d -b |
             // | -c a |
+            $a = $this->rowData[0][0];
+            $b = $this->rowData[0][1];
+            $c = $this->rowData[1][0];
+            $d = $this->rowData[1][1];
 
-            $a = $this->_matrixRowData[0][0];
-            $b = $this->_matrixRowData[0][1];
-            $c = $this->_matrixRowData[1][0];
-            $d = $this->_matrixRowData[1][1];
-
-            return new SquareMatrix($d, -$b,
-                -$c, $a);
+            return new SquareMatrix(
+                $d, -$b,
+                -$c, $a
+            );
         }
 
-        // The idea is that it's the transpose of the cofactors
+        // The adjugate is the transpose of the cofactor matrix
         $result = [];
 
-        for ($currentColumn = 0; $currentColumn < $this->_columnCount; $currentColumn++) {
-            for ($currentRow = 0; $currentRow < $this->_rowCount; $currentRow++) {
+        for ($currentColumn = 0; $currentColumn < $this->columnCount; $currentColumn++) {
+            for ($currentRow = 0; $currentRow < $this->rowCount; $currentRow++) {
                 $result[$currentColumn][$currentRow] = $this->getCofactor($currentRow, $currentColumn);
             }
         }
 
-        return new Matrix($this->_columnCount, $this->_rowCount, $result);
+        return new Matrix($this->columnCount, $this->rowCount, $result);
     }
 
-    public function getInverse() : SquareMatrix|Matrix
+    public function getInverse(): Matrix
     {
-        if (($this->_rowCount == 1) && ($this->_columnCount == 1)) {
-            return new SquareMatrix(1.0 / $this->_matrixRowData[0][0]);
+        if ($this->rowCount === 1 && $this->columnCount === 1) {
+            return new SquareMatrix(1.0 / $this->rowData[0][0]);
         }
 
         // Take the simple approach:
@@ -196,7 +190,7 @@ class Matrix
         return self::scalarMultiply($determinantInverse, $adjugate);
     }
 
-    public static function scalarMultiply($scalarValue, $matrix): Matrix
+    public static function scalarMultiply(float $scalarValue, Matrix $matrix): Matrix
     {
         $rows = $matrix->getRowCount();
         $columns = $matrix->getColumnCount();
@@ -211,39 +205,29 @@ class Matrix
         return new Matrix($rows, $columns, $newValues);
     }
 
-    public static function add($left, $right): Matrix
+    public static function add(Matrix $left, Matrix $right): Matrix
     {
-        if (
-            ($left->getRowCount() != $right->getRowCount())
-            ||
-            ($left->getColumnCount() != $right->getColumnCount())
-        ) {
-            throw new Exception('Matrices must be of the same size');
+        if ($left->getRowCount() !== $right->getRowCount() || $left->getColumnCount() !== $right->getColumnCount()) {
+            throw new InvalidArgumentException('Matrices must be of the same size');
         }
-
-        // simple addition of each item
 
         $resultMatrix = [];
 
         for ($currentRow = 0; $currentRow < $left->getRowCount(); $currentRow++) {
             for ($currentColumn = 0; $currentColumn < $right->getColumnCount(); $currentColumn++) {
                 $resultMatrix[$currentRow][$currentColumn] =
-                    $left->getValue($currentRow, $currentColumn)
-                    +
-                    $right->getValue($currentRow, $currentColumn);
+                    $left->getValue($currentRow, $currentColumn) + $right->getValue($currentRow, $currentColumn);
             }
         }
 
         return new Matrix($left->getRowCount(), $right->getColumnCount(), $resultMatrix);
     }
 
-    public static function multiply($left, $right): Matrix
+    public static function multiply(Matrix $left, Matrix $right): Matrix
     {
-        // Just your standard matrix multiplication.
         // See http://en.wikipedia.org/wiki/Matrix_multiplication for details
-
-        if ($left->getColumnCount() != $right->getRowCount()) {
-            throw new Exception('The width of the left matrix must match the height of the right matrix');
+        if ($left->getColumnCount() !== $right->getRowCount()) {
+            throw new InvalidArgumentException('The width of the left matrix must match the height of the right matrix');
         }
 
         $resultRows = $left->getRowCount();
@@ -253,13 +237,10 @@ class Matrix
 
         for ($currentRow = 0; $currentRow < $resultRows; $currentRow++) {
             for ($currentColumn = 0; $currentColumn < $resultColumns; $currentColumn++) {
-                $productValue = 0;
+                $productValue = 0.0;
 
                 for ($vectorIndex = 0; $vectorIndex < $left->getColumnCount(); $vectorIndex++) {
-                    $leftValue = $left->getValue($currentRow, $vectorIndex);
-                    $rightValue = $right->getValue($vectorIndex, $currentColumn);
-                    $vectorIndexProduct = $leftValue * $rightValue;
-                    $productValue += $vectorIndexProduct;
+                    $productValue += $left->getValue($currentRow, $vectorIndex) * $right->getValue($vectorIndex, $currentColumn);
                 }
 
                 $resultMatrix[$currentRow][$currentColumn] = $productValue;
@@ -269,68 +250,55 @@ class Matrix
         return new Matrix($resultRows, $resultColumns, $resultMatrix);
     }
 
-    private function getMinorMatrix($rowToRemove, $columnToRemove): Matrix
+    private function getMinorMatrix(int $rowToRemove, int $columnToRemove): Matrix
     {
         // See http://en.wikipedia.org/wiki/Minor_(linear_algebra)
-
-        // I'm going to use a horribly naïve algorithm... because I can :)
         $result = [];
-
         $actualRow = 0;
 
-        for ($currentRow = 0; $currentRow < $this->_rowCount; $currentRow++) {
-            if ($currentRow == $rowToRemove) {
+        for ($currentRow = 0; $currentRow < $this->rowCount; $currentRow++) {
+            if ($currentRow === $rowToRemove) {
                 continue;
             }
 
             $actualCol = 0;
 
-            for ($currentColumn = 0; $currentColumn < $this->_columnCount; $currentColumn++) {
-                if ($currentColumn == $columnToRemove) {
+            for ($currentColumn = 0; $currentColumn < $this->columnCount; $currentColumn++) {
+                if ($currentColumn === $columnToRemove) {
                     continue;
                 }
 
-                $result[$actualRow][$actualCol] = $this->_matrixRowData[$currentRow][$currentColumn];
-
+                $result[$actualRow][$actualCol] = $this->rowData[$currentRow][$currentColumn];
                 $actualCol++;
             }
 
             $actualRow++;
         }
 
-        return new Matrix($this->_rowCount - 1, $this->_columnCount - 1, $result);
+        return new Matrix($this->rowCount - 1, $this->columnCount - 1, $result);
     }
 
-    public function getCofactor($rowToRemove, $columnToRemove)
+    public function getCofactor(int $rowToRemove, int $columnToRemove): float
     {
         // See http://en.wikipedia.org/wiki/Cofactor_(linear_algebra) for details
-        // REVIEW: should things be reversed since I'm 0 indexed?
-        $sum = $rowToRemove + $columnToRemove;
-        $isEven = ($sum % 2 == 0);
+        $isEven = (($rowToRemove + $columnToRemove) % 2) === 0;
+        $minorDeterminant = $this->getMinorMatrix($rowToRemove, $columnToRemove)->getDeterminant();
 
-        if ($isEven) {
-            return $this->getMinorMatrix($rowToRemove, $columnToRemove)->getDeterminant();
-        } else {
-            return -1.0 * $this->getMinorMatrix($rowToRemove, $columnToRemove)->getDeterminant();
-        }
+        return $isEven ? $minorDeterminant : -1.0 * $minorDeterminant;
     }
 
-    public function equals($otherMatrix): bool
+    /**
+     * Whether both matrices have the same size and every value is within ERROR_TOLERANCE.
+     */
+    public function equals(Matrix $otherMatrix): bool
     {
-        // If one is null, but not both, return false.
-        if ($otherMatrix == null) {
+        if ($this->rowCount !== $otherMatrix->getRowCount() || $this->columnCount !== $otherMatrix->getColumnCount()) {
             return false;
         }
 
-        if (($this->_rowCount != $otherMatrix->getRowCount()) || ($this->_columnCount != $otherMatrix->getColumnCount())) {
-            return false;
-        }
-
-        for ($currentRow = 0; $currentRow < $this->_rowCount; $currentRow++) {
-            for ($currentColumn = 0; $currentColumn < $this->_columnCount; $currentColumn++) {
-                $delta =
-                    abs($this->_matrixRowData[$currentRow][$currentColumn] -
-                        $otherMatrix->getValue($currentRow, $currentColumn));
+        for ($currentRow = 0; $currentRow < $this->rowCount; $currentRow++) {
+            for ($currentColumn = 0; $currentColumn < $this->columnCount; $currentColumn++) {
+                $delta = abs($this->rowData[$currentRow][$currentColumn] - $otherMatrix->getValue($currentRow, $currentColumn));
 
                 if ($delta > self::ERROR_TOLERANCE) {
                     return false;

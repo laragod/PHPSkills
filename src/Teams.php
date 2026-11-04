@@ -4,17 +4,16 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-class Teams
+/**
+ * Helper for building the list of teams a SkillCalculator expects.
+ */
+final class Teams
 {
-    public static function concat(...$args/*variable arguments*/): array
+    /**
+     * @return list<Team>
+     */
+    public static function concat(Team ...$teams): array
     {
-        $result = [];
-
-        foreach ($args as $currentTeam) {
-            $localCurrentTeam = $currentTeam;
-            $result[] = $localCurrentTeam;
-        }
-
-        return $result;
+        return array_values($teams);
     }
 }

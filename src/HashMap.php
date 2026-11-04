@@ -4,52 +4,80 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
+use OutOfBoundsException;
+
 /**
- * Basic hashmap that supports object keys.
+ * A small insertion-ordered map that supports object keys.
+ *
+ * @template TKey of object
+ * @template TValue
  */
-class HashMap
+final class HashMap
 {
-    private $_hashToValue = [];
+    /** @var array<int, TKey> */
+    private array $keys = [];
 
-    private $_hashToKey = [];
+    /** @var array<int, TValue> */
+    private array $values = [];
 
-    public function getValue($key)
+    /**
+     * @param  TKey  $key
+     * @return TValue
+     */
+    public function getValue(object $key): mixed
     {
-        $hash = $this->getHash($key);
+        $id = spl_object_id($key);
 
-        return $this->_hashToValue[$hash];
+        if (! array_key_exists($id, $this->values)) {
+            throw new OutOfBoundsException(sprintf('No value stored for the given %s key', $key::class));
+        }
+
+        return $this->values[$id];
     }
 
-    public function setValue($key, $value): HashMap
+    /**
+     * @param  TKey  $key
+     */
+    public function hasKey(object $key): bool
     {
-        $hash = $this->getHash($key);
-        $this->_hashToKey[$hash] = $key;
-        $this->_hashToValue[$hash] = $value;
+        return array_key_exists(spl_object_id($key), $this->keys);
+    }
+
+    /**
+     * @param  TKey  $key
+     * @param  TValue  $value
+     * @return $this
+     */
+    public function setValue(object $key, mixed $value): static
+    {
+        $id = spl_object_id($key);
+        $this->keys[$id] = $key;
+        $this->values[$id] = $value;
 
         return $this;
     }
 
+    /**
+     * @return list<TKey>
+     */
     public function getAllKeys(): array
     {
-        return array_values($this->_hashToKey);
+        return array_values($this->keys);
     }
 
+    /**
+     * @return list<TValue>
+     */
     public function getAllValues(): array
     {
-        return array_values($this->_hashToValue);
+        return array_values($this->values);
     }
 
+    /**
+     * @return int<0, max>
+     */
     public function count(): int
     {
-        return count($this->_hashToKey);
-    }
-
-    private function getHash($key)
-    {
-        if (is_object($key)) {
-            return spl_object_hash($key);
-        }
-
-        return $key;
+        return count($this->keys);
     }
 }

@@ -5,27 +5,35 @@ declare(strict_types=1);
 namespace Laragod\Skills;
 
 /**
- * Represents a comparison between two players.
+ * The outcome of a game between two players (or teams) from the first one's point of view.
  *
- * @internal The actual values for the enum were chosen so that the also correspond to the multiplier for updates to means.
+ * The backing values are chosen so that they also act as the multiplier for mean updates.
  */
-class PairwiseComparison
+enum PairwiseComparison: int
 {
-    const WIN = 1;
+    case WIN = 1;
+    case DRAW = 0;
+    case LOSE = -1;
 
-    const DRAW = 0;
-
-    const LOSE = -1;
-
-    public static function getRankFromComparison($comparison): array
+    /**
+     * The ranks of both sides, where 1 is first place and a draw repeats the number.
+     *
+     * @return array{int, int}
+     */
+    public function toRanks(): array
     {
-        switch ($comparison) {
-            case PairwiseComparison::WIN:
-                return [1, 2];
-            case PairwiseComparison::LOSE:
-                return [2, 1];
-            default:
-                return [1, 1];
-        }
+        return match ($this) {
+            self::WIN => [1, 2],
+            self::LOSE => [2, 1],
+            self::DRAW => [1, 1],
+        };
+    }
+
+    /**
+     * @return array{int, int}
+     */
+    public static function getRankFromComparison(self $comparison): array
+    {
+        return $comparison->toRanks();
     }
 }

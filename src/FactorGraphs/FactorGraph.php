@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
+/**
+ * @template TValue
+ */
 abstract class FactorGraph
 {
-    private $_variableFactory;
+    /**
+     * @param  VariableFactory<TValue>  $variableFactory
+     */
+    protected function __construct(
+        private readonly VariableFactory $variableFactory,
+    ) {}
 
-    public function getVariableFactory()
+    /**
+     * @return VariableFactory<TValue>
+     */
+    public function getVariableFactory(): VariableFactory
     {
-        return $this->_variableFactory;
+        return $this->variableFactory;
     }
-
-    public function setVariableFactory(VariableFactory $factory): void
-    {
-        $this->_variableFactory = $factory;
-    }
-
-    abstract public function getGameInfo();
 }

@@ -4,112 +4,134 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-use Exception;
 use Laragod\Skills\Guard;
-use Laragod\Skills\HashMap;
+use LogicException;
+use Stringable;
 
-abstract class Factor
+/**
+ * A factor connects variables and sends them messages.
+ *
+ * The i-th message always belongs to the i-th variable.
+ *
+ * @template TValue
+ */
+abstract class Factor implements Stringable
 {
-    private $_messages = [];
+    /** @var list<Message<TValue>> */
+    private array $messages = [];
 
-    private \Laragod\Skills\HashMap $_messageToVariableBinding;
+    /** @var list<Variable<TValue>> */
+    private array $variables = [];
 
-    private string $_name;
+    private readonly string $name;
 
-    private $_variables = [];
-
-    protected function __construct($name)
+    protected function __construct(string $name)
     {
-        $this->_name = 'Factor['.$name.']';
-        $this->_messageToVariableBinding = new HashMap();
+        $this->name = 'Factor['.$name.']';
     }
 
     /**
-     * @return mixed The log-normalization constant of that factor
+     * The log-normalization constant of this factor.
      */
-    public function getLogNormalization() : mixed
+    public function getLogNormalization(): float
     {
-        return 0;
+        return 0.0;
     }
 
     /**
-     * @return int The number of messages that the factor has
+     * The number of messages (and therefore variables) the factor has.
      */
     public function getNumberOfMessages(): int
     {
-        return count($this->_messages);
+        return count($this->messages);
     }
 
+    /**
+     * @return list<Variable<TValue>>
+     */
     protected function getVariables(): array
     {
-        return $this->_variables;
+        return $this->variables;
     }
 
+    /**
+     * @return list<Message<TValue>>
+     */
     protected function getMessages(): array
     {
-        return $this->_messages;
+        return $this->messages;
     }
 
     /**
-     * Update the message and marginal of the i-th variable that the factor is connected to
+     * Updates the message and marginal of the i-th variable the factor is connected to.
      *
-     * @throws Exception
+     * @return float The change in the variable's marginal.
      */
-    public function updateMessageIndex($messageIndex)
+    public function updateMessageIndex(int $messageIndex): float
     {
-        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), 'messageIndex');
-        $message = $this->_messages[$messageIndex];
-        $variable = $this->_messageToVariableBinding->getValue($message);
+        Guard::argumentIsValidIndex($messageIndex, count($this->messages), 'messageIndex');
 
-        return $this->updateMessageVariable($message, $variable);
-    }
-
-    protected function updateMessageVariable(Message $message, Variable $variable)
-    {
-        throw new Exception();
+        return $this->updateMessageVariable($this->messages[$messageIndex], $this->variables[$messageIndex]);
     }
 
     /**
-     * Resets the marginal of the variables a factor is connected to
+     * @param  Message<TValue>  $message
+     * @param  Variable<TValue>  $variable
+     * @return float The change in the variable's marginal.
+     */
+    protected function updateMessageVariable(Message $message, Variable $variable): float
+    {
+        throw new LogicException(static::class.' does not support updating a single message');
+    }
+
+    /**
+     * Resets the marginals of the variables the factor is connected to.
      */
     public function resetMarginals(): void
     {
-        $allValues = $this->_messageToVariableBinding->getAllValues();
-        foreach ($allValues as $currentVariable) {
-            $currentVariable->resetToPrior();
+        foreach ($this->variables as $variable) {
+            $variable->resetToPrior();
         }
     }
 
     /**
-     * Sends the ith message to the marginal and returns the log-normalization constant
-     *
-     * @throws Exception
+     * Sends the i-th message to the marginal and returns the log-normalization constant.
      */
-    public function sendMessageIndex($messageIndex)
+    public function sendMessageIndex(int $messageIndex): float
     {
-        Guard::argumentIsValidIndex($messageIndex, count($this->_messages), 'messageIndex');
+        Guard::argumentIsValidIndex($messageIndex, count($this->messages), 'messageIndex');
 
-        $message = $this->_messages[$messageIndex];
-        $variable = $this->_messageToVariableBinding->getValue($message);
-
-        return $this->sendMessageVariable($message, $variable);
+        return $this->sendMessageVariable($this->messages[$messageIndex], $this->variables[$messageIndex]);
     }
 
-    abstract protected function sendMessageVariable(Message $message, Variable $variable);
+    /**
+     * @param  Message<TValue>  $message
+     * @param  Variable<TValue>  $variable
+     * @return float The log-normalization constant.
+     */
+    abstract protected function sendMessageVariable(Message $message, Variable $variable): float;
 
-    abstract public function createVariableToMessageBinding(Variable $variable);
+    /**
+     * @param  Variable<TValue>  $variable
+     * @return Message<TValue>
+     */
+    abstract public function createVariableToMessageBinding(Variable $variable): Message;
 
+    /**
+     * @param  Variable<TValue>  $variable
+     * @param  Message<TValue>  $message
+     * @return Message<TValue>
+     */
     protected function createVariableToMessageBindingWithMessage(Variable $variable, Message $message): Message
     {
-        $this->_messageToVariableBinding->setValue($message, $variable);
-        $this->_messages[] = $message;
-        $this->_variables[] = $variable;
+        $this->messages[] = $message;
+        $this->variables[] = $variable;
 
         return $message;
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        return $this->_name;
+        return $this->name;
     }
 }

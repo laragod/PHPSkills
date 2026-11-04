@@ -6,36 +6,34 @@ namespace Laragod\Skills\FactorGraphs;
 
 /**
  * Helper class for computing the factor graph's normalization constant.
+ *
+ * @template TValue
  */
-class FactorList
+final class FactorList
 {
-    private $_list = [];
+    /** @var list<Factor<TValue>> */
+    private array $list = [];
 
-    public function getLogNormalization()
+    public function getLogNormalization(): float
     {
-        $list = $this->_list;
-        foreach ($list as &$currentFactor) {
-            $currentFactor->resetMarginals();
+        foreach ($this->list as $factor) {
+            $factor->resetMarginals();
         }
 
         $sumLogZ = 0.0;
 
-        $listCount = count($this->_list);
-
-        for ($i = 0; $i < $listCount; $i++) {
-            $f = $this->_list[$i];
-
-            $numberOfMessages = $f->getNumberOfMessages();
+        foreach ($this->list as $factor) {
+            $numberOfMessages = $factor->getNumberOfMessages();
 
             for ($j = 0; $j < $numberOfMessages; $j++) {
-                $sumLogZ += $f->sendMessageIndex($j);
+                $sumLogZ += $factor->sendMessageIndex($j);
             }
         }
 
-        $sumLogS = 0;
+        $sumLogS = 0.0;
 
-        foreach ($list as &$currentFactor) {
-            $sumLogS += $currentFactor->getLogNormalization();
+        foreach ($this->list as $factor) {
+            $sumLogS += $factor->getLogNormalization();
         }
 
         return $sumLogZ + $sumLogS;
@@ -43,12 +41,16 @@ class FactorList
 
     public function count(): int
     {
-        return count($this->_list);
+        return count($this->list);
     }
 
+    /**
+     * @param  Factor<TValue>  $factor
+     * @return Factor<TValue>
+     */
     public function addFactor(Factor $factor): Factor
     {
-        $this->_list[] = $factor;
+        $this->list[] = $factor;
 
         return $factor;
     }

@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\Elo;
 
-// see http://ratings.fide.com/calculator_rtd.phtml for details
+/**
+ * The FIDE K-factor for established players.
+ *
+ * @see https://ratings.fide.com/calculator_rtd.phtml
+ */
 class FideKFactor extends KFactor
 {
-    public function getValueForRating($rating): int
+    public function getValueForRating(float $rating): float
     {
-        if ($rating < 2400) {
-            return 15;
-        }
-
-        return 10;
+        return $rating < 2400 ? 15.0 : 10.0;
     }
 }

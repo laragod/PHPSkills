@@ -14,40 +14,40 @@ use Laragod\Skills\TrueSkill\TruncatedGaussianCorrectionFunctions;
  *
  * See the accompanying math paper for more details.
  */
-class GaussianWithinFactor extends GaussianFactor
+final class GaussianWithinFactor extends GaussianFactor
 {
-    private $_epsilon;
-
-    public function __construct($epsilon, Variable $variable)
-    {
+    /**
+     * @param  Variable<GaussianDistribution>  $variable
+     */
+    public function __construct(
+        private readonly float $epsilon,
+        Variable $variable,
+    ) {
         parent::__construct(sprintf('%s <= %.2f', $variable, $epsilon));
-        $this->_epsilon = $epsilon;
         $this->createVariableToMessageBinding($variable);
     }
 
-    public function getLogNormalization() : int|float
+    public function getLogNormalization(): float
     {
-        /** @var Variable[] $variables */
-        $variables = $this->getVariables();
-        $marginal = $variables[0]->getValue();
-
-        /** @var Message[] $messages */
-        $messages = $this->getMessages();
-        $message = $messages[0]->getValue();
+        $marginal = $this->getVariables()[0]->getValue();
+        $message = $this->getMessages()[0]->getValue();
         $messageFromVariable = GaussianDistribution::divide($marginal, $message);
         $mean = $messageFromVariable->getMean();
         $std = $messageFromVariable->getStandardDeviation();
-        $z = GaussianDistribution::cumulativeTo(($this->_epsilon - $mean) / $std)
-            -
-            GaussianDistribution::cumulativeTo((-$this->_epsilon - $mean) / $std);
+        $z = GaussianDistribution::cumulativeTo(($this->epsilon - $mean) / $std)
+            - GaussianDistribution::cumulativeTo((-$this->epsilon - $mean) / $std);
 
         return -GaussianDistribution::logProductNormalization($messageFromVariable, $message) + log($z);
     }
 
-    protected function updateMessageVariable(Message $message, Variable $variable)
+    /**
+     * @param  Message<GaussianDistribution>  $message
+     * @param  Variable<GaussianDistribution>  $variable
+     */
+    protected function updateMessageVariable(Message $message, Variable $variable): float
     {
-        $oldMarginal = clone $variable->getValue();
-        $oldMessage = clone $message->getValue();
+        $oldMarginal = $variable->getValue();
+        $oldMessage = $message->getValue();
         $messageFromVariable = GaussianDistribution::divide($oldMarginal, $oldMessage);
 
         $c = $messageFromVariable->getPrecision();
@@ -55,16 +55,11 @@ class GaussianWithinFactor extends GaussianFactor
 
         $sqrtC = sqrt($c);
         $dOnSqrtC = $d / $sqrtC;
-
-        $epsilonTimesSqrtC = $this->_epsilon * $sqrtC;
-        $d = $messageFromVariable->getPrecisionMean();
+        $epsilonTimesSqrtC = $this->epsilon * $sqrtC;
 
         $denominator = 1.0 - TruncatedGaussianCorrectionFunctions::wWithinMargin($dOnSqrtC, $epsilonTimesSqrtC);
         $newPrecision = $c / $denominator;
-        $newPrecisionMean = ($d +
-                                $sqrtC *
-                                TruncatedGaussianCorrectionFunctions::vWithinMargin($dOnSqrtC, $epsilonTimesSqrtC)
-        ) / $denominator;
+        $newPrecisionMean = ($d + $sqrtC * TruncatedGaussianCorrectionFunctions::vWithinMargin($dOnSqrtC, $epsilonTimesSqrtC)) / $denominator;
 
         $newMarginal = GaussianDistribution::fromPrecisionMean($newPrecisionMean, $newPrecision);
         $newMessage = GaussianDistribution::divide(
@@ -77,6 +72,6 @@ class GaussianWithinFactor extends GaussianFactor
         $variable->setValue($newMarginal);
 
         // Return the difference in the new marginal
-        return GaussianDistribution::subtract($newMarginal, $oldMarginal);
+        return GaussianDistribution::absoluteDifference($newMarginal, $oldMarginal);
     }
 }

@@ -7,35 +7,31 @@ namespace Laragod\Skills\Elo;
 use Laragod\Skills\GameInfo;
 
 /**
- * Including Elo's scheme as a simple comparison.
- * See http://en.wikipedia.org/wiki/Elo_rating_system#Theory
- * for more details
+ * The classic FIDE (chess) Elo scheme, included as a simple comparison to TrueSkill.
+ *
+ * @see https://en.wikipedia.org/wiki/Elo_rating_system#Theory
  */
-class FideEloCalculator extends TwoPlayerEloCalculator
+final class FideEloCalculator extends TwoPlayerEloCalculator
 {
-    public function __construct(FideKFactor $kFactor)
+    public function __construct(FideKFactor $kFactor = new FideKFactor)
     {
         parent::__construct($kFactor);
     }
 
-    public static function createWithDefaultKFactor(): FideEloCalculator
+    public static function createWithDefaultKFactor(): self
     {
-        return new FideEloCalculator(new FideKFactor());
+        return new self(new FideKFactor);
     }
 
-    public static function createWithProvisionalKFactor(): FideEloCalculator
+    public static function createWithProvisionalKFactor(): self
     {
-        return new FideEloCalculator(new ProvisionalFideKFactor());
+        return new self(new ProvisionalFideKFactor);
     }
 
-    public function getPlayerWinProbability(GameInfo $gameInfo, $playerRating, $opponentRating): float
+    public function getPlayerWinProbability(GameInfo $gameInfo, float $playerRating, float $opponentRating): float
     {
         $ratingDifference = $opponentRating - $playerRating;
 
-        return 1.0
-        /
-        (
-            1.0 + pow(10.0, $ratingDifference / (2 * $gameInfo->getBeta()))
-        );
+        return 1.0 / (1.0 + 10.0 ** ($ratingDifference / (2 * $gameInfo->getBeta())));
     }
 }

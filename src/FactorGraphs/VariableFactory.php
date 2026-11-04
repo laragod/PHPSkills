@@ -4,27 +4,38 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\FactorGraphs;
 
-class VariableFactory
+use Closure;
+
+/**
+ * Creates variables that start out with a fresh prior.
+ *
+ * @template TValue
+ */
+final readonly class VariableFactory
 {
-    // using a Func<TValue> to encourage fresh copies in case it's overwritten
-    private $_variablePriorInitializer;
+    /**
+     * @param  Closure(): TValue  $variablePriorInitializer
+     */
+    public function __construct(
+        private Closure $variablePriorInitializer,
+    ) {}
 
-    public function __construct($variablePriorInitializer)
+    /**
+     * @return Variable<TValue>
+     */
+    public function createBasicVariable(string $name): Variable
     {
-        $this->_variablePriorInitializer = $variablePriorInitializer;
+        return new Variable($name, ($this->variablePriorInitializer)());
     }
 
-    public function createBasicVariable($name): Variable
+    /**
+     * @template TKey
+     *
+     * @param  TKey  $key
+     * @return KeyedVariable<TKey, TValue>
+     */
+    public function createKeyedVariable(mixed $key, string $name): KeyedVariable
     {
-        $initializer = $this->_variablePriorInitializer;
-
-        return new Variable($name, $initializer());
-    }
-
-    public function createKeyedVariable($key, $name): KeyedVariable
-    {
-        $initializer = $this->_variablePriorInitializer;
-
-        return new KeyedVariable($key, $name, $initializer());
+        return new KeyedVariable($key, $name, ($this->variablePriorInitializer)());
     }
 }

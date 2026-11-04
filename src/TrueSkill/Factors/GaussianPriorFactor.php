@@ -13,32 +13,44 @@ use Laragod\Skills\Numerics\GaussianDistribution;
  *
  * See the accompanying math paper for more details.
  */
-class GaussianPriorFactor extends GaussianFactor
+final class GaussianPriorFactor extends GaussianFactor
 {
-    private \Laragod\Skills\Numerics\GaussianDistribution $_newMessage;
+    private readonly GaussianDistribution $newMessage;
 
-    public function __construct($mean, $variance, Variable $variable)
+    /**
+     * @param  Variable<GaussianDistribution>  $variable
+     */
+    public function __construct(float $mean, float $variance, Variable $variable)
     {
         parent::__construct(sprintf('Prior value going to %s', $variable));
-        $this->_newMessage = new GaussianDistribution($mean, sqrt($variance));
-        $newMessage = new Message(GaussianDistribution::fromPrecisionMean(0, 0),
-            sprintf('message from %s to %s', $this, $variable));
+        $this->newMessage = new GaussianDistribution($mean, sqrt($variance));
 
-        $this->createVariableToMessageBindingWithMessage($variable, $newMessage);
+        $this->createVariableToMessageBindingWithMessage(
+            $variable,
+            new Message(
+                GaussianDistribution::fromPrecisionMean(0.0, 0.0),
+                sprintf('message from %s to %s', $this, $variable)
+            )
+        );
     }
 
-    protected function updateMessageVariable(Message $message, Variable $variable)
+    /**
+     * @param  Message<GaussianDistribution>  $message
+     * @param  Variable<GaussianDistribution>  $variable
+     */
+    protected function updateMessageVariable(Message $message, Variable $variable): float
     {
-        $oldMarginal = clone $variable->getValue();
-        $oldMessage = $message;
+        $oldMarginal = $variable->getValue();
+        $oldMessage = $message->getValue();
+
         $newMarginal = GaussianDistribution::fromPrecisionMean(
-            $oldMarginal->getPrecisionMean() + $this->_newMessage->getPrecisionMean() - $oldMessage->getValue()->getPrecisionMean(),
-            $oldMarginal->getPrecision() + $this->_newMessage->getPrecision() - $oldMessage->getValue()->getPrecision()
+            $oldMarginal->getPrecisionMean() + $this->newMessage->getPrecisionMean() - $oldMessage->getPrecisionMean(),
+            $oldMarginal->getPrecision() + $this->newMessage->getPrecision() - $oldMessage->getPrecision()
         );
 
         $variable->setValue($newMarginal);
-        $message->setValue($this->_newMessage);
+        $message->setValue($this->newMessage);
 
-        return GaussianDistribution::subtract($oldMarginal, $newMarginal);
+        return GaussianDistribution::absoluteDifference($oldMarginal, $newMarginal);
     }
 }

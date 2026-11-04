@@ -6,34 +6,33 @@ namespace Laragod\Skills\Numerics;
 
 /**
  * Basic math functions.
- *
- * @author     Jeff Moser <jeff@moserware.com>
- * @copyright  2010 Jeff Moser
  */
-class BasicMath
+final class BasicMath
 {
     /**
-     * Squares the input (x^2 = x * x)
-     *
-     * @param  number  $x  Value to square (x)
-     * @return number The squared value (x^2)
+     * Squares the input (x^2 = x * x).
      */
-    public static function square($x) : float|int
+    public static function square(float $x): float
     {
         return $x * $x;
     }
 
     /**
-     * Sums the items in $itemsToSum
+     * Sums the result of applying the callback to every item.
      *
-     * @param  array  $itemsToSum  The items to sum,
-     * @param  callable  $callback  The function to apply to each array element before summing.
-     * @return number The sum.
+     * @template T
+     *
+     * @param  array<T>  $items
+     * @param  callable(T): float  $callback
      */
-    public static function sum(array $itemsToSum, $callback)
+    public static function sum(array $items, callable $callback): float
     {
-        $mappedItems = array_map($callback, $itemsToSum);
+        $sum = 0.0;
 
-        return array_sum($mappedItems);
+        foreach ($items as $item) {
+            $sum += $callback($item);
+        }
+
+        return $sum;
     }
 }

@@ -1,5 +1,10 @@
-coverage
-nbproject
-.idea
-vendor
-bin
+/vendor/
+/composer.lock
+/coverage/
+/coverage.xml
+/.phpunit.cache/
+/.phpstan.cache/
+/.phpunit.result.cache
+/.idea/
+/.vscode/
+/nbproject/

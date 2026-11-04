@@ -4,65 +4,61 @@ declare(strict_types=1);
 
 namespace Laragod\Skills;
 
-// Container for a player's rating.
 use Laragod\Skills\Numerics\GaussianDistribution;
+use Stringable;
 
-class Rating
+/**
+ * Container for a player's rating.
+ */
+class Rating implements Stringable
 {
-    const CONSERVATIVE_STANDARD_DEVIATION_MULTIPLIER = 3;
-
-    private $_conservativeStandardDeviationMultiplier;
-
-    private $_mean;
-
-    private $_standardDeviation;
+    public const CONSERVATIVE_STANDARD_DEVIATION_MULTIPLIER = 3.0;
 
     /**
-     * Constructs a rating.
-     *
      * @param  float  $mean  The statistical mean value of the rating (also known as mu).
-     * @param  float  $standardDeviation  The standard deviation of the rating (also known as s).
-     * @param  float|int  $conservativeStandardDeviationMultiplier  optional The number of standardDeviations to subtract from the mean to achieve a conservative rating.
+     * @param  float  $standardDeviation  The standard deviation of the rating (also known as sigma).
+     * @param  float  $conservativeStandardDeviationMultiplier  The number of standard deviations to subtract from the mean to get a conservative rating.
      */
-    public function __construct($mean, $standardDeviation, $conservativeStandardDeviationMultiplier = self::CONSERVATIVE_STANDARD_DEVIATION_MULTIPLIER)
-    {
-        $this->_mean = $mean;
-        $this->_standardDeviation = $standardDeviation;
-        $this->_conservativeStandardDeviationMultiplier = $conservativeStandardDeviationMultiplier;
-    }
+    public function __construct(
+        private readonly float $mean,
+        private readonly float $standardDeviation,
+        private readonly float $conservativeStandardDeviationMultiplier = self::CONSERVATIVE_STANDARD_DEVIATION_MULTIPLIER,
+    ) {}
 
     /**
-     * The statistical mean value of the rating (also known as �).
+     * The statistical mean value of the rating (also known as mu).
      */
     public function getMean(): float
     {
-        return $this->_mean;
+        return $this->mean;
     }
 
     /**
-     * The standard deviation (the spread) of the rating. This is also known as s.
+     * The standard deviation (the spread) of the rating (also known as sigma).
      */
     public function getStandardDeviation(): float
     {
-        return $this->_standardDeviation;
+        return $this->standardDeviation;
     }
 
     /**
      * A conservative estimate of skill based on the mean and standard deviation.
      */
-    public function getConservativeRating() : float|int
+    public function getConservativeRating(): float
     {
-        return $this->_mean - $this->_conservativeStandardDeviationMultiplier * $this->_standardDeviation;
+        return $this->mean - $this->conservativeStandardDeviationMultiplier * $this->standardDeviation;
     }
 
-    public function getPartialUpdate(Rating $prior, Rating $fullPosterior, $updatePercentage): Rating
+    /**
+     * Linearly interpolates between a prior and a full posterior rating in the canonical
+     * (precision / precision-mean) space, as clarified by Ralf Herbrich.
+     *
+     * @param  float  $updatePercentage  0.0 keeps the prior, 1.0 applies the full posterior.
+     */
+    public static function getPartialUpdate(Rating $prior, Rating $fullPosterior, float $updatePercentage): Rating
     {
         $priorGaussian = new GaussianDistribution($prior->getMean(), $prior->getStandardDeviation());
         $posteriorGaussian = new GaussianDistribution($fullPosterior->getMean(), $fullPosterior->getStandardDeviation());
-
-        // From a clarification email from Ralf Herbrich:
-        // "the idea is to compute a linear interpolation between the prior and posterior skills of each player
-        //  ... in the canonical space of parameters"
 
         $precisionDifference = $posteriorGaussian->getPrecision() - $priorGaussian->getPrecision();
         $partialPrecisionDifference = $updatePercentage * $precisionDifference;
@@ -70,16 +66,20 @@ class Rating
         $precisionMeanDifference = $posteriorGaussian->getPrecisionMean() - $priorGaussian->getPrecisionMean();
         $partialPrecisionMeanDifference = $updatePercentage * $precisionMeanDifference;
 
-        $partialPosteriorGaussion = GaussianDistribution::fromPrecisionMean(
+        $partialPosteriorGaussian = GaussianDistribution::fromPrecisionMean(
             $priorGaussian->getPrecisionMean() + $partialPrecisionMeanDifference,
             $priorGaussian->getPrecision() + $partialPrecisionDifference
         );
 
-        return new Rating($partialPosteriorGaussion->getMean(), $partialPosteriorGaussion->getStandardDeviation(), $prior->_conservativeStandardDeviationMultiplier);
+        return new Rating(
+            $partialPosteriorGaussian->getMean(),
+            $partialPosteriorGaussian->getStandardDeviation(),
+            $prior->conservativeStandardDeviationMultiplier
+        );
     }
 
-    public function __toString()
+    public function __toString(): string
     {
-        return sprintf('mean=%.4f, standardDeviation=%.4f', $this->_mean, $this->_standardDeviation);
+        return sprintf('mean=%.4f, standardDeviation=%.4f', $this->mean, $this->standardDeviation);
     }
 }

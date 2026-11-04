@@ -4,67 +4,70 @@ declare(strict_types=1);
 
 namespace Laragod\Skills\TrueSkill\Layers;
 
-use Exception;
+use Laragod\Skills\FactorGraphs\Schedule;
 use Laragod\Skills\FactorGraphs\ScheduleLoop;
 use Laragod\Skills\FactorGraphs\ScheduleSequence;
 use Laragod\Skills\FactorGraphs\ScheduleStep;
+use Laragod\Skills\FactorGraphs\Variable;
+use Laragod\Skills\Numerics\GaussianDistribution;
 use Laragod\Skills\TrueSkill\TrueSkillFactorGraph;
+use LogicException;
 
-// The whole purpose of this is to do a loop on the bottom
-class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
+/**
+ * Runs the team difference and comparison layers in a loop until they converge.
+ *
+ * @extends TrueSkillFactorGraphLayer<Variable<GaussianDistribution>, Variable<GaussianDistribution>>
+ */
+final class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
 {
-    private \Laragod\Skills\TrueSkill\Layers\TeamDifferencesComparisonLayer $_TeamDifferencesComparisonLayer;
+    private const INITIAL_MAX_DELTA = 0.0001;
 
-    private \Laragod\Skills\TrueSkill\Layers\TeamPerformancesToTeamPerformanceDifferencesLayer $_TeamPerformancesToTeamPerformanceDifferencesLayer;
-
-    public function __construct(TrueSkillFactorGraph $parentGraph,
-        TeamPerformancesToTeamPerformanceDifferencesLayer $teamPerformancesToPerformanceDifferences,
-        TeamDifferencesComparisonLayer $teamDifferencesComparisonLayer)
-    {
+    public function __construct(
+        TrueSkillFactorGraph $parentGraph,
+        private readonly TeamPerformancesToTeamPerformanceDifferencesLayer $teamPerformancesToTeamPerformanceDifferencesLayer,
+        private readonly TeamDifferencesComparisonLayer $teamDifferencesComparisonLayer,
+    ) {
         parent::__construct($parentGraph);
-        $this->_TeamPerformancesToTeamPerformanceDifferencesLayer = $teamPerformancesToPerformanceDifferences;
-        $this->_TeamDifferencesComparisonLayer = $teamDifferencesComparisonLayer;
     }
 
     public function getLocalFactors(): array
     {
-        return array_merge($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors(),
-            $this->_TeamDifferencesComparisonLayer->getLocalFactors()
-        );
+        return [
+            ...$this->teamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors(),
+            ...$this->teamDifferencesComparisonLayer->getLocalFactors(),
+        ];
     }
 
     public function buildLayer(): void
     {
-        $inputVariablesGroups = $this->getInputVariablesGroups();
-        $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->setInputVariablesGroups($inputVariablesGroups);
-        $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->buildLayer();
+        $this->teamPerformancesToTeamPerformanceDifferencesLayer->setInputVariablesGroups($this->getInputVariablesGroups());
+        $this->teamPerformancesToTeamPerformanceDifferencesLayer->buildLayer();
 
-        $teamDifferencesOutputVariablesGroups = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getOutputVariablesGroups();
-        $this->_TeamDifferencesComparisonLayer->setInputVariablesGroups($teamDifferencesOutputVariablesGroups);
-        $this->_TeamDifferencesComparisonLayer->buildLayer();
+        $this->teamDifferencesComparisonLayer->setInputVariablesGroups($this->teamPerformancesToTeamPerformanceDifferencesLayer->getOutputVariablesGroups());
+        $this->teamDifferencesComparisonLayer->buildLayer();
     }
 
+    /**
+     * @return ScheduleSequence<GaussianDistribution>
+     */
     public function createPriorSchedule(): ScheduleSequence
     {
-        switch (count($this->getInputVariablesGroups())) {
-            case 0:
-            case 1:
-                throw new Exception('InvalidOperation');
-            case 2:
-                $loop = $this->createTwoTeamInnerPriorLoopSchedule();
-                break;
-            default:
-                $loop = $this->createMultipleTeamInnerPriorLoopSchedule();
-                break;
+        $teamCount = count($this->getInputVariablesGroups());
+
+        if ($teamCount < 2) {
+            throw new LogicException('At least two teams are needed to build the inner schedule');
         }
 
+        $loop = $teamCount === 2
+            ? $this->createTwoTeamInnerPriorLoopSchedule()
+            : $this->createMultipleTeamInnerPriorLoopSchedule();
+
         // When dealing with differences, there are always (n-1) differences, so add in the 1
-        $totalTeamDifferences = count($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors());
+        $differenceFactors = $this->teamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
+        $totalTeamDifferences = count($differenceFactors);
 
-        $localFactors = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
-
-        $firstDifferencesFactor = $localFactors[0];
-        $lastDifferencesFactor = $localFactors[$totalTeamDifferences - 1];
+        $firstDifferencesFactor = $differenceFactors[0];
+        $lastDifferencesFactor = $differenceFactors[$totalTeamDifferences - 1];
 
         return new ScheduleSequence(
             'inner schedule',
@@ -72,65 +75,55 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
                 $loop,
                 new ScheduleStep(
                     'teamPerformanceToPerformanceDifferenceFactors[0] @ 1',
-                    $firstDifferencesFactor, 1),
+                    $firstDifferencesFactor,
+                    1
+                ),
                 new ScheduleStep(
                     sprintf('teamPerformanceToPerformanceDifferenceFactors[teamTeamDifferences = %d - 1] @ 2', $totalTeamDifferences),
-                    $lastDifferencesFactor, 2),
+                    $lastDifferencesFactor,
+                    2
+                ),
             ]
         );
     }
 
-    private function createTwoTeamInnerPriorLoopSchedule(): ScheduleSequence
+    /**
+     * @return Schedule<GaussianDistribution>
+     */
+    private function createTwoTeamInnerPriorLoopSchedule(): Schedule
     {
-        $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
-        $teamDifferencesComparisonLayerLocalFactors = $this->_TeamDifferencesComparisonLayer->getLocalFactors();
-
-        $firstPerfToTeamDiff = $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors[0];
-        $firstTeamDiffComparison = $teamDifferencesComparisonLayerLocalFactors[0];
-        $itemsToSequence = [
-            new ScheduleStep(
-                'send team perf to perf differences',
-                $firstPerfToTeamDiff,
-                0),
-            new ScheduleStep(
-                'send to greater than or within factor',
-                $firstTeamDiffComparison,
-                0),
-        ];
+        $firstPerfToTeamDiff = $this->teamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors()[0];
+        $firstTeamDiffComparison = $this->teamDifferencesComparisonLayer->getLocalFactors()[0];
 
         return $this->scheduleSequence(
-            $itemsToSequence,
-            'loop of just two teams inner sequence');
+            [
+                new ScheduleStep('send team perf to perf differences', $firstPerfToTeamDiff, 0),
+                new ScheduleStep('send to greater than or within factor', $firstTeamDiffComparison, 0),
+            ],
+            'loop of just two teams inner sequence'
+        );
     }
 
-    private function createMultipleTeamInnerPriorLoopSchedule(): ScheduleLoop
+    /**
+     * @return Schedule<GaussianDistribution>
+     */
+    private function createMultipleTeamInnerPriorLoopSchedule(): Schedule
     {
-        $totalTeamDifferences = count($this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors());
+        $differenceFactors = $this->teamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
+        $comparisonFactors = $this->teamDifferencesComparisonLayer->getLocalFactors();
+        $totalTeamDifferences = count($differenceFactors);
 
         $forwardScheduleList = [];
 
         for ($i = 0; $i < $totalTeamDifferences - 1; $i++) {
-            $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
-            $teamDifferencesComparisonLayerLocalFactors = $this->_TeamDifferencesComparisonLayer->getLocalFactors();
-
-            $currentTeamPerfToTeamPerfDiff = $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors[$i];
-            $currentTeamDiffComparison = $teamDifferencesComparisonLayerLocalFactors[$i];
-
-            $currentForwardSchedulePiece =
-                $this->scheduleSequence(
-                    [
-                        new ScheduleStep(
-                            sprintf('team perf to perf diff %d', $i),
-                            $currentTeamPerfToTeamPerfDiff, 0),
-                        new ScheduleStep(
-                            sprintf('greater than or within result factor %d', $i),
-                            $currentTeamDiffComparison, 0),
-                        new ScheduleStep(
-                            sprintf('team perf to perf diff factors [%d], 2', $i),
-                            $currentTeamPerfToTeamPerfDiff, 2),
-                    ], sprintf('current forward schedule piece %d', $i));
-
-            $forwardScheduleList[] = $currentForwardSchedulePiece;
+            $forwardScheduleList[] = $this->scheduleSequence(
+                [
+                    new ScheduleStep(sprintf('team perf to perf diff %d', $i), $differenceFactors[$i], 0),
+                    new ScheduleStep(sprintf('greater than or within result factor %d', $i), $comparisonFactors[$i], 0),
+                    new ScheduleStep(sprintf('team perf to perf diff factors [%d], 2', $i), $differenceFactors[$i], 2),
+                ],
+                sprintf('current forward schedule piece %d', $i)
+            );
         }
 
         $forwardSchedule = new ScheduleSequence('forward schedule', $forwardScheduleList);
@@ -138,41 +131,29 @@ class IteratedTeamDifferencesInnerLayer extends TrueSkillFactorGraphLayer
         $backwardScheduleList = [];
 
         for ($i = 0; $i < $totalTeamDifferences - 1; $i++) {
-            $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors = $this->_TeamPerformancesToTeamPerformanceDifferencesLayer->getLocalFactors();
-            $teamDifferencesComparisonLayerLocalFactors = $this->_TeamDifferencesComparisonLayer->getLocalFactors();
+            $index = $totalTeamDifferences - 1 - $i;
 
-            $differencesFactor = $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors[$totalTeamDifferences - 1 - $i];
-            $comparisonFactor = $teamDifferencesComparisonLayerLocalFactors[$totalTeamDifferences - 1 - $i];
-            $performancesToDifferencesFactor = $teamPerformancesToTeamPerformanceDifferencesLayerLocalFactors[$totalTeamDifferences - 1 - $i];
-
-            $currentBackwardSchedulePiece = new ScheduleSequence(
+            $backwardScheduleList[] = new ScheduleSequence(
                 'current backward schedule piece',
                 [
-                    new ScheduleStep(
-                        sprintf('teamPerformanceToPerformanceDifferenceFactors[totalTeamDifferences - 1 - %d] @ 0', $i),
-                        $differencesFactor, 0),
-                    new ScheduleStep(
-                        sprintf('greaterThanOrWithinResultFactors[totalTeamDifferences - 1 - %d] @ 0', $i),
-                        $comparisonFactor, 0),
-                    new ScheduleStep(
-                        sprintf('teamPerformanceToPerformanceDifferenceFactors[totalTeamDifferences - 1 - %d] @ 1', $i),
-                        $performancesToDifferencesFactor, 1),
-                ]);
-            $backwardScheduleList[] = $currentBackwardSchedulePiece;
+                    new ScheduleStep(sprintf('teamPerformanceToPerformanceDifferenceFactors[totalTeamDifferences - 1 - %d] @ 0', $i), $differenceFactors[$index], 0),
+                    new ScheduleStep(sprintf('greaterThanOrWithinResultFactors[totalTeamDifferences - 1 - %d] @ 0', $i), $comparisonFactors[$index], 0),
+                    new ScheduleStep(sprintf('teamPerformanceToPerformanceDifferenceFactors[totalTeamDifferences - 1 - %d] @ 1', $i), $differenceFactors[$index], 1),
+                ]
+            );
         }
 
         $backwardSchedule = new ScheduleSequence('backward schedule', $backwardScheduleList);
 
-        $forwardBackwardScheduleToLoop =
-            new ScheduleSequence(
-                'forward Backward Schedule To Loop',
-                [$forwardSchedule, $backwardSchedule]);
-
-        $initialMaxDelta = 0.0001;
+        $forwardBackwardScheduleToLoop = new ScheduleSequence(
+            'forward Backward Schedule To Loop',
+            [$forwardSchedule, $backwardSchedule]
+        );
 
         return new ScheduleLoop(
-            sprintf('loop with max delta of %f', $initialMaxDelta),
+            sprintf('loop with max delta of %f', self::INITIAL_MAX_DELTA),
             $forwardBackwardScheduleToLoop,
-            $initialMaxDelta);
+            self::INITIAL_MAX_DELTA
+        );
     }
 }
